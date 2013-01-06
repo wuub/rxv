@@ -2,15 +2,20 @@
 
 import requests
 import xml.etree.ElementTree as ET
+from collections import namedtuple
 
 SSDP_ADDR = "239.255.255.250"
 SSDP_PORT = 1900
+
+BasicStatus = namedtuple("BasicStatus", "on volume mute input")
+MenuStatus = namedtuple("MenuStatus", "ready layer name current_line max_line current_list")
 
 
 class RXV473(object):
 
     def __init__(self, ip):
         self._ip = ip
+        self._inputs_cache = None
 
     @property
     def ctrl_url(self):
@@ -21,6 +26,18 @@ class RXV473(object):
         response = ET.XML(res.content)
         assert response.get("RC") == "0"
         return response
+
+    @property
+    def basic_status(self):
+        request_text = '<YAMAHA_AV cmd="GET"><Main_Zone><Basic_Status>GetParam</Basic_Status></Main_Zone></YAMAHA_AV>'
+        response = self._request(request_text)
+        on = response.find("Main_Zone/Basic_Status/Power_Control/Power").text
+        volume = int(response.find("Main_Zone/Basic_Status/Volume/Lvl/Val").text) / 10.0
+        mute = response.find("Main_Zone/Basic_Status/Volume/Mute").text
+        inp = response.find("Main_Zone/Basic_Status/Input/Input_Sel").text
+
+        bs = BasicStatus(on, volume, mute, inp)
+        return bs
 
     @property
     def on(self):
@@ -43,20 +60,76 @@ class RXV473(object):
     def input(self):
         request_text = '<YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel>GetParam</Input_Sel></Input></Main_Zone></YAMAHA_AV>'
         response = self._request(request_text)
-        input = response.find("Main_Zone/Input/Input_Sel").text
-        return input
+        return response.find("Main_Zone/Input/Input_Sel").text
 
     @input.setter
     def input(self, input_name):
         assert input_name in self.inputs()
         template = '<YAMAHA_AV cmd="PUT"><Main_Zone><Input><Input_Sel>{input_name}</Input_Sel></Input></Main_Zone></YAMAHA_AV>'
         request_text = template.format(input_name=input_name)
-        response = self._request(request_text)
-        return response
+        self._request(request_text)
 
     def inputs(self):
-        res = self._request('<YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel_Item>GetParam</Input_Sel_Item></Input></Main_Zone></YAMAHA_AV>')
-        return [elt.text for elt in res.iter('Param')]
+        if not self._inputs_cache:
+            res = self._request('<YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel_Item>GetParam</Input_Sel_Item></Input></Main_Zone></YAMAHA_AV>')
+            self._inputs_cache = dict(zip((elt.text for elt in res.iter('Param')), (elt.text for elt in res.iter("Src_Name"))))
+        return self._inputs_cache
+
+    def is_ready(self):
+
+        src_name = self.inputs()[self.input]
+        if not src_name:
+            return True  # no SrcName -> input is instantly ready
+        template = '<YAMAHA_AV cmd="GET"><{src_name}><Config>GetParam</Config></{src_name}></YAMAHA_AV>'
+        config = self._request(template.format(src_name=src_name))
+        avail = config.iter('Feature_Availability').next()
+        return avail.text == 'Ready'
+
+    def menu_status(self):
+        template = '<YAMAHA_AV cmd="GET"><{src_name}><List_Info>GetParam</List_Info></{src_name}></YAMAHA_AV>'
+        src_name = self.inputs()[self.input]
+        if not src_name:
+            return None
+
+        res = self._request(template.format(src_name=src_name))
+        ready = res.iter("Menu_Status").next().text == "Ready"
+        layer = int(res.iter("Menu_Layer").next().text)
+        name = res.iter("Menu_Name").next().text
+        current_line = int(res.iter("Current_Line").next().text)
+        max_line = int(res.iter("Max_Line").next().text)
+        current_list = res.iter('Current_List').next()
+
+        cl = {elt.tag: elt.find('Txt').text for elt in current_list.getchildren() if elt.find('Attribute').text != 'Unselectable'}
+
+        ms = MenuStatus(ready, layer, name, current_line, max_line, cl)
+        return ms
+
+    def menu_jump_line(self, lineno):
+        src_name = self.inputs()[self.input]
+        if not src_name:
+            return None
+        template = '<YAMAHA_AV cmd="PUT"><{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line></List_Control></{src_name}></YAMAHA_AV>'
+        return self._request(template.format(lineno=lineno, src_name=src_name))
+
+    def _menu_cursor(self, action):
+        src_name = self.inputs()[self.input]
+        if not src_name:
+            return None
+        template = '<YAMAHA_AV cmd="PUT"><{src_name}><List_Control><Cursor>{action}</Cursor></List_Control></{src_name}></YAMAHA_AV>'
+        request_text = template.format(src_name=src_name, action=action)
+        return self._request(request_text)
+
+    def menu_up(self):
+        return self._menu_cursor("Up")
+
+    def menu_down(self):
+        return self._menu_cursor("Down")
+
+    def menu_sel(self):
+        return self._menu_cursor("Sel")
+
+    def menu_return(self):
+        return self._menu_cursor("Return")
 
     @property
     def volume(self):
@@ -67,13 +140,10 @@ class RXV473(object):
 
     @volume.setter
     def volume(self, value):
-
         val = str(int(value * 10))  # '{:.1f}'.format(value * 10.0)
-        print val
         template = '<YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>{value}</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>'
         request_text = template.format(value=val)
-        response = self._request(request_text)
-        return response
+        self._request(request_text)
 
     def _direct_sel(self, lineno):
         template = '<YAMAHA_AV cmd="PUT"><NET_RADIO><List_Control><Direct_Sel>Line_{num}</Direct_Sel></List_Control></NET_RADIO></YAMAHA_AV>'
@@ -85,90 +155,40 @@ class RXV473(object):
         request_text = '<YAMAHA_AV cmd="GET"><Main_Zone><Power_Control><Sleep>GetParam</Sleep></Power_Control></Main_Zone></YAMAHA_AV>'
         response = self._request(request_text)
         sleep = response.find("Main_Zone/Power_Control/Sleep").text
-
         return sleep
 
     @sleep.setter
     def sleep(self, value):
         template = '<YAMAHA_AV cmd="PUT"><Main_Zone><Power_Control><Sleep>{value}</Sleep></Power_Control></Main_Zone></YAMAHA_AV>'
         request_text = template.format(value=value)
-        response = self._request(request_text)
-        return response
+        self._request(request_text)
 
 
 def main():
     import time
     rx = RXV473("")
-
     rx.on = True
-    while not rx.on:
-        time.sleep(0.5)
-
-    rx.input = 'NET RADIO'
-
     time.sleep(5)
     rx.volume = -80.0
     rx.sleep = "90 min"
-    time.sleep(30)
+
+    rx.input = 'NET RADIO'
+    while not rx.is_ready():
+        time.sleep(0.5)
+
+    while not rx.menu_status().ready:
+        time.sleep(0.5)
+
     rx._direct_sel(1)
-    time.sleep(30)
+    while not rx.menu_status().ready:
+        time.sleep(0.5)
+
     rx._direct_sel(4)
+    time.sleep(4)
 
     for val in range(-80, -44, 1):
         rx.volume = val
         time.sleep(0.5)
-    """
-    rx.on = True
-    rx.on = False
-    """
-
-    """
-    rx.volume = -41.2
-    rx.volume
-
-    <YAMAHA_AV cmd="PUT"><Main_Zone><Input><Input_Sel>SERVER</Input_Sel></Input></Main_Zone></YAMAHA_AV>
-    Tuner, AirPlay, iPod_USB, USB, NET_RADIO, SERVER, HDMI1, HDMI2, HDMI3, HDMI4
-   ['NET RADIO', 'SERVER', 'AirPlay', 'USB', 'iPod (USB)', 'TUNER', 'HDMI1', 'HDMI2',
-   'HDMI3', 'HDMI4', 'AV1', 'AV2', 'AV3', 'AV4', 'AV5', 'AV6', 'AUDIO', 'V-AUX']
-    rx.input = "usb"
-
-    rx.play()
-    rx.pause()
-    rx.stop()
-
-    rx.skip_fwd()
-    rx.skip_rev()
-
-    <YAMAHA_AV cmd="GET"><Main_Zone><Basic_Status>GetParam</Basic_Status></Main_Zone></YAMAHA_AV>HTTP/1.1 200 OK
-
-<YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Basic_Status><Power_Control><Power>On</Power><Sleep>Off</Sleep></Power_Control><Volume><Lvl><Val>-455</Val><Exp>1</Exp><Unit>dB</Unit></Lvl><Mute>Off</Mute></Volume><Input><Input_Sel>SERVER</Input_Sel><Input_Sel_Item_Info><Param>SERVER</Param><RW>RW</RW><Title> SERVER  </Title><Icon><On>/YamahaRemoteControl/Icons/icon006.png</On><Off></Off></Icon><Src_Name>SERVER</Src_Name><Src_Number>1</Src_Number></Input_Sel_Item_Info></Input><Surround><Program_Sel><Current><Straight>Off</Straight><Enhancer>On</Enhancer><Sound_Program>2ch Stereo</Sound_Program></Current></Program_Sel><_3D_Cinema_DSP>Off</_3D_Cinema_DSP></Surround><Sound_Video><Tone><Bass><Val>0</Val><Exp>1</Exp><Unit>dB</Unit></Bass><Treble><Val>0</Val><Exp>1</Exp><Unit>dB</Unit></Treble></Tone><Direct><Mode>Off</Mode></Direct><HDMI><Standby_Through_Info>On</Standby_Through_Info><Output><OUT_1>On</OUT_1></Output></HDMI><Adaptive_DRC>Auto</Adaptive_DRC></Sound_Video></Basic_Status></Main_Zone></YAMAHA_AV>
-
-*********************************************
-<?xml version="1.0" encoding="utf-8"?><YAMAHA_AV cmd="GET"><NET_RADIO><Config>GetParam</Config></NET_RADIO></YAMAHA_AV>HTTP/1.1 200 OK
-
-Server: AV_Receiver/3.1 (RX-V473)
-
-Content-Type: text/xml; charset="utf-8"
-
-Content-Length: 130
-
-
-
-<YAMAHA_AV rsp="GET" RC="0"><NET_RADIO><Config><Feature_Availability>Ready</Feature_Availability></Config></NET_RADIO></YAMAHA_AV>
-
-******************************************
-<?xml version="1.0" encoding="utf-8"?><YAMAHA_AV cmd="GET"><NET_RADIO><List_Info>GetParam</List_Info></NET_RADIO></YAMAHA_AV>HTTP/1.1 200 OK
-
-Server: AV_Receiver/3.1 (RX-V473)
-
-Content-Type: text/xml; charset="utf-8"
-
-Content-Length: 839
-
-
-
-<YAMAHA_AV rsp="GET" RC="0"><NET_RADIO><List_Info><Menu_Status>Ready</Menu_Status><Menu_Layer>1</Menu_Layer><Menu_Name>NET RADIO</Menu_Name><Current_List><Line_1><Txt>Bookmarks</Txt><Attribute>Container</Attribute></Line_1><Line_2><Txt>Locations</Txt><Attribute>Container</Attribute></Line_2><Line_3><Txt>Genres</Txt><Attribute>Container</Attribute></Line_3><Line_4><Txt>New Stations</Txt><Attribute>Container</Attribute></Line_4><Line_5><Txt>Popular Stations</Txt><Attribute>Container</Attribute></Line_5><Line_6><Txt>Podcasts</Txt><Attribute>Container</Attribute></Line_6><Line_7><Txt>Help</Txt><Attribute>Container</Attribute></Line_7><Line_8><Txt></Txt><Attribute>Unselectable</Attribute></Line_8></Current_List><Cursor_Position><Current_Line>1</Current_Line><Max_Line>7</Max_Line></Cursor_Position></List_Info></NET_RADIO></YAMAHA_AV>
-    """
 
 if __name__ == '__main__':
     main()

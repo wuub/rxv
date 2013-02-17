@@ -173,20 +173,22 @@ def main():
     rx.sleep = "90 min"
 
     rx.input = 'NET RADIO'
+
+    time.sleep(10)
     while not rx.is_ready():
         time.sleep(0.5)
 
     while not rx.menu_status().ready:
         time.sleep(0.5)
 
+    time.sleep(10)
     rx._direct_sel(1)
-    while not rx.menu_status().ready:
-        time.sleep(0.5)
 
-    rx._direct_sel(4)
-    time.sleep(4)
+    time.sleep(10)
+    rx._direct_sel(2)
+    time.sleep(10)
 
-    for val in range(-80, -44, 1):
+    for val in range(-80, -55, 1):
         rx.volume = val
         time.sleep(0.5)
 

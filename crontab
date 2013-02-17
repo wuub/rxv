@@ -1,0 +1,8 @@
+0 8 * * 0 python /home/pi/rxv473.py
+0 8 * * 6 python /home/pi/rxv473.py
+30 7 * * 5 python /home/pi/rxv473.py
+30 7 * * 4 python /home/pi/rxv473.py
+30 7 * * 3 python /home/pi/rxv473.py
+30 7 * * 2 python /home/pi/rxv473.py
+30 7 * * 1 python /home/pi/rxv473.py
+

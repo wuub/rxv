@@ -1,10 +1,8 @@
-#!/usr/bin/env python
 import time
 import requests
 import xml.etree.ElementTree as ET
 from math import floor
 from collections import namedtuple
-from pprint import pprint
 
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
@@ -202,18 +200,3 @@ class RXV473(object):
     def sleep(self, value):
         request_text = PowerControlSleep % value
         self._request('PUT', request_text)
-
-
-def main():
-    rx = RXV473('10.0.0.55')
-    rx.on = True
-    pprint(rx.basic_status)
-    pprint(rx.inputs())
-
-    rx.input = 'HDMI3'
-    rx.volume = -50
-    rx.volume_fade(-50)
-
-
-if __name__ == '__main__':
-    main()

@@ -1,14 +1,32 @@
-#! /usr/bin/env python
-
+#!/usr/bin/env python
+import time
 import requests
 import xml.etree.ElementTree as ET
+from math import floor
 from collections import namedtuple
+from pprint import pprint
 
-SSDP_ADDR = "239.255.255.250"
-SSDP_PORT = 1900
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
-MenuStatus = namedtuple("MenuStatus", "ready layer name current_line max_line current_list")
+MenuStatus = namedtuple("MenuStatus",
+                        "ready layer name current_line max_line current_list")
+
+YamahaCommand = '<YAMAHA_AV cmd="%s">%s</YAMAHA_AV>'
+MainZone = '<Main_Zone>%s</Main_Zone>'
+BasicStatusGet = '<Basic_Status>GetParam</Basic_Status>'
+PowerControl = '<Power_Control><Power>%s</Power></Power_Control>'
+PowerControlSleep = '<Power_Control><Sleep>%s</Sleep></Power_Control>'
+Input = '<Input><Input_Sel>%s</Input_Sel></Input>'
+InputSelItem = '<Input><Input_Sel_Item>%s</Input_Sel_Item></Input>'
+ConfigGet = '<%s><Config>GetParam</Config></%s>'
+ListGet = '<%s><List_Info>GetParam</List_Info></%s>'
+ListControlJumpLine = '<%s><List_Control><Jump_Line>%s</Jump_Line>' \
+                      '</List_Control></%s>'
+ListControlCursor = '<%s><List_Control><Cursor>%s</Cursor></List_Control></%s>'
+VolumeLevel = '<Volume><Lvl>%s</Lvl></Volume>'
+VolumeLevelSet = VolumeLevel % '<Val>%s</Val><Exp>%s</Exp><Unit>%s</Unit>'
+SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_%s'\
+                     '</Direct_Sel></List_Control></NET_RADIO>'
 
 
 class RXV473(object):
@@ -19,105 +37,119 @@ class RXV473(object):
 
     @property
     def ctrl_url(self):
-        return 'http://192.168.1.116:80/YamahaRemoteControl/ctrl'
+        return 'http://%s/YamahaRemoteControl/ctrl' % self._ip
 
-    def _request(self, request_text):
-        res = requests.post(self.ctrl_url, data=request_text, headers={"Content-Type": "text/xml"})
+    def _request(self, command, request_text, main_zone=True):
+        inner_text = MainZone % request_text if main_zone else request_text
+        request_text = (YamahaCommand % (command, inner_text))
+        res = requests.post(self.ctrl_url,
+                            data=request_text,
+                            headers={"Content-Type": "text/xml"})
         response = ET.XML(res.content)
         assert response.get("RC") == "0"
         return response
 
     @property
     def basic_status(self):
-        request_text = '<YAMAHA_AV cmd="GET"><Main_Zone><Basic_Status>GetParam</Basic_Status></Main_Zone></YAMAHA_AV>'
-        response = self._request(request_text)
+        response = self._request('GET', BasicStatusGet)
         on = response.find("Main_Zone/Basic_Status/Power_Control/Power").text
-        volume = int(response.find("Main_Zone/Basic_Status/Volume/Lvl/Val").text) / 10.0
-        mute = response.find("Main_Zone/Basic_Status/Volume/Mute").text
         inp = response.find("Main_Zone/Basic_Status/Input/Input_Sel").text
+        mute = response.find("Main_Zone/Basic_Status/Volume/Mute").text
+        volume = response.find("Main_Zone/Basic_Status/Volume/Lvl/Val").text
+        volume = int(volume) / 10.0
 
-        bs = BasicStatus(on, volume, mute, inp)
-        return bs
+        status = BasicStatus(on, volume, mute, inp)
+        return status
 
     @property
     def on(self):
-        request_text = '<YAMAHA_AV cmd="GET"><Main_Zone><Power_Control><Power>GetParam</Power></Power_Control></Main_Zone></YAMAHA_AV>'
-        response = self._request(request_text)
+        request_text = PowerControl % 'GetParam'
+        response = self._request('GET', request_text)
         power = response.find("Main_Zone/Power_Control/Power").text
         assert power in ["On", "Standby"]
         return power == "On"
 
     @on.setter
-    def on(self, value):
-        assert value in [True, False]
-        new_value = "On" if value else "Standby"
-        template = '<YAMAHA_AV cmd="PUT"><Main_Zone><Power_Control><Power>{value}</Power></Power_Control></Main_Zone></YAMAHA_AV>'
-        request_text = template.format(value=new_value)
-        response = self._request(request_text)
+    def on(self, state):
+        assert state in [True, False]
+        new_state = "On" if state else "Standby"
+        request_text = PowerControl % new_state
+        response = self._request('PUT', request_text)
         return response
+
+    def off(self):
+        return self.on(False)
 
     @property
     def input(self):
-        request_text = '<YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel>GetParam</Input_Sel></Input></Main_Zone></YAMAHA_AV>'
+        request_text = Input % 'GetParam'
         response = self._request(request_text)
         return response.find("Main_Zone/Input/Input_Sel").text
 
     @input.setter
     def input(self, input_name):
         assert input_name in self.inputs()
-        template = '<YAMAHA_AV cmd="PUT"><Main_Zone><Input><Input_Sel>{input_name}</Input_Sel></Input></Main_Zone></YAMAHA_AV>'
-        request_text = template.format(input_name=input_name)
-        self._request(request_text)
+        request_text = Input % input_name
+        self._request('PUT', request_text)
 
     def inputs(self):
         if not self._inputs_cache:
-            res = self._request('<YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel_Item>GetParam</Input_Sel_Item></Input></Main_Zone></YAMAHA_AV>')
-            self._inputs_cache = dict(zip((elt.text for elt in res.iter('Param')), (elt.text for elt in res.iter("Src_Name"))))
+            request_text = InputSelItem % 'GetParam'
+            res = self._request('GET', request_text)
+            self._inputs_cache = dict(zip((elt.text
+                                           for elt in res.iter('Param')),
+                                          (elt.text
+                                           for elt in res.iter("Src_Name"))))
         return self._inputs_cache
 
     def is_ready(self):
+        if self.input not in self.inputs() or not self.inputs()[self.input]:
+            return True  # input is instantly ready
 
         src_name = self.inputs()[self.input]
-        if not src_name:
-            return True  # no SrcName -> input is instantly ready
-        template = '<YAMAHA_AV cmd="GET"><{src_name}><Config>GetParam</Config></{src_name}></YAMAHA_AV>'
-        config = self._request(template.format(src_name=src_name))
+        request_text = ConfigGet % (src_name, src_name)
+        config = self._request('GET', request_text)
+
         avail = config.iter('Feature_Availability').next()
         return avail.text == 'Ready'
 
     def menu_status(self):
-        template = '<YAMAHA_AV cmd="GET"><{src_name}><List_Info>GetParam</List_Info></{src_name}></YAMAHA_AV>'
-        src_name = self.inputs()[self.input]
-        if not src_name:
-            return None
+        if self.input not in self.inputs() or not self.inputs()[self.input]:
+            return True
 
-        res = self._request(template.format(src_name=src_name))
-        ready = res.iter("Menu_Status").next().text == "Ready"
+        src_name = self.inputs()[self.input]
+        request_text = ListGet % (src_name, src_name)
+        res = self._request(request_text)
+
+        ready = (res.iter("Menu_Status").next().text == "Ready")
         layer = int(res.iter("Menu_Layer").next().text)
         name = res.iter("Menu_Name").next().text
         current_line = int(res.iter("Current_Line").next().text)
         max_line = int(res.iter("Max_Line").next().text)
         current_list = res.iter('Current_List').next()
 
-        cl = {elt.tag: elt.find('Txt').text for elt in current_list.getchildren() if elt.find('Attribute').text != 'Unselectable'}
+        cl = {elt.tag: elt.find('Txt').text
+              for elt in current_list.getchildren()
+              if elt.find('Attribute').text != 'Unselectable'}
 
-        ms = MenuStatus(ready, layer, name, current_line, max_line, cl)
-        return ms
+        status = MenuStatus(ready, layer, name, current_line, max_line, cl)
+        return status
 
     def menu_jump_line(self, lineno):
-        src_name = self.inputs()[self.input]
-        if not src_name:
+        if self.input not in self.inputs() or not self.inputs()[self.input]:
             return None
-        template = '<YAMAHA_AV cmd="PUT"><{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line></List_Control></{src_name}></YAMAHA_AV>'
-        return self._request(template.format(lineno=lineno, src_name=src_name))
+
+        src_name = self.inputs()[self.input]
+        request_text = ListControlJumpLine % (src_name, lineno, src_name)
+        return self._request('PUT', request_text)
 
     def _menu_cursor(self, action):
-        src_name = self.inputs()[self.input]
-        if not src_name:
+        if self.input not in self.inputs() or not self.inputs()[self.input]:
             return None
-        template = '<YAMAHA_AV cmd="PUT"><{src_name}><List_Control><Cursor>{action}</Cursor></List_Control></{src_name}></YAMAHA_AV>'
-        request_text = template.format(src_name=src_name, action=action)
-        return self._request(request_text)
+
+        src_name = self.inputs()[self.input]
+        request_text = ListControlCursor % (src_name, action, src_name)
+        return self._request('PUT', request_text)
 
     def menu_up(self):
         return self._menu_cursor("Up")
@@ -133,64 +165,55 @@ class RXV473(object):
 
     @property
     def volume(self):
-        request_text = '<YAMAHA_AV cmd="GET"><Main_Zone><Volume><Lvl>GetParam</Lvl></Volume></Main_Zone></YAMAHA_AV>'
-        response = self._request(request_text)
-        vol = response.find('Main_Zone/Volume/Lvl/Val')
-        return float(vol.text) / 10.0
+        request_text = VolumeLevel % 'GetParam'
+        response = self._request('GET', request_text)
+        vol = response.find('Main_Zone/Volume/Lvl/Val').text
+        return float(vol) / 10.0
 
     @volume.setter
     def volume(self, value):
-        val = str(int(value * 10))  # '{:.1f}'.format(value * 10.0)
-        template = '<YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>{value}</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>'
-        request_text = template.format(value=val)
-        self._request(request_text)
+        value = str(int(value * 10))
+        exp = 1
+        unit = 'dB'
+
+        request_text = VolumeLevelSet % (value, exp, unit)
+        self._request('PUT', request_text)
+
+    def volume_fade(self, final_vol, sleep=0.5):
+        start_vol = int(floor(self.volume))
+        step = 1 if final_vol > start_vol else -1
+
+        for val in xrange(start_vol, final_vol, step):
+            self.volume = val
+            time.sleep(sleep)
 
     def _direct_sel(self, lineno):
-        template = '<YAMAHA_AV cmd="PUT"><NET_RADIO><List_Control><Direct_Sel>Line_{num}</Direct_Sel></List_Control></NET_RADIO></YAMAHA_AV>'
-        request_text = template.format(num=lineno)
-        return self._request(request_text)
+        request_text = SelectNetRadioLine % lineno
+        return self._request('PUT', request_text)
 
     @property
     def sleep(self):
-        request_text = '<YAMAHA_AV cmd="GET"><Main_Zone><Power_Control><Sleep>GetParam</Sleep></Power_Control></Main_Zone></YAMAHA_AV>'
-        response = self._request(request_text)
+        request_text = PowerControlSleep % 'GetParam'
+        response = self._request('GET', request_text)
         sleep = response.find("Main_Zone/Power_Control/Sleep").text
         return sleep
 
     @sleep.setter
     def sleep(self, value):
-        template = '<YAMAHA_AV cmd="PUT"><Main_Zone><Power_Control><Sleep>{value}</Sleep></Power_Control></Main_Zone></YAMAHA_AV>'
-        request_text = template.format(value=value)
-        self._request(request_text)
+        request_text = PowerControlSleep % value
+        self._request('PUT', request_text)
 
 
 def main():
-    import time
-    rx = RXV473("")
+    rx = RXV473('10.0.0.55')
     rx.on = True
-    time.sleep(5)
-    rx.volume = -80.0
-    rx.sleep = "90 min"
+    pprint(rx.basic_status)
+    pprint(rx.inputs())
 
-    rx.input = 'NET RADIO'
+    rx.input = 'HDMI3'
+    rx.volume = -50
+    rx.volume_fade(-50)
 
-    time.sleep(10)
-    while not rx.is_ready():
-        time.sleep(0.5)
-
-    while not rx.menu_status().ready:
-        time.sleep(0.5)
-
-    time.sleep(10)
-    rx._direct_sel(1)
-
-    time.sleep(10)
-    rx._direct_sel(2)
-    time.sleep(10)
-
-    for val in range(-80, -55, 1):
-        rx.volume = val
-        time.sleep(0.5)
 
 if __name__ == '__main__':
     main()

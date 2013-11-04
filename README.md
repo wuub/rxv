@@ -3,7 +3,10 @@ rxv
 
 Hacky Python interface to Yamaha RX-V473 
 
-Authors
-=======
+Authors (in alphabetical order)
+===============================
 
-[@jnnt](/jnnt) & [@wuub](/wuub)
+* [@briancline](/briancline)
+* [@jnnt](/jnnt)
+* [@wuub](/wuub)
+

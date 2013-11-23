@@ -37,13 +37,28 @@ SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
 
 class RXV(object):
 
-    def __init__(self, ctrl_url):
+    def __init__(self, ctrl_url, model_name="Unknown"):
         if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}.\d{1,3}", ctrl_url):
             # backward compatibility: accept ip address as a contorl url
             warnings.warn("Using IP address as a Control URL is deprecated")
             ctrl_url = 'http://%s/YamahaRemoteControl/ctrl' % ctrl_url
         self.ctrl_url = ctrl_url
+        self.model_name = model_name
         self._inputs_cache = None
+
+    def __unicode__(self):
+        return u'''<{cls} model_name="{model}" ctrl_url="{ctrl_url}" at {addr}>'''.format(
+            cls=self.__class__.__name__,
+            model=self.model_name,
+            ctrl_url=self.ctrl_url,
+            addr=hex(id(self))
+        )
+
+    def __str__(self):
+        return self.__unicode__().encode("utf-8")
+
+    def __repr__(self):
+        return self.__str__()
 
     def _request(self, command, request_text, main_zone=True):
         if main_zone:

@@ -24,13 +24,13 @@ CONTROL_URL_QUERY = '***/{urn:schemas-yamaha-com:device-1-0}X_controlURL'
 MODEL_NAME_QUERY = "{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}modelName"
 
 
-RxvDetails = namedtuple("RxvDetails", "model_name control_url")
+RxvDetails = namedtuple("RxvDetails", "ctrl_url model_name")
 
 
-def discover():
+def discover(timeout=0.5):
     """Crude SSDP discovery. Returns a list of RxvDetails objects
        with data about Yamaha Receivers in local network"""
-    socket.setdefaulttimeout(1.0)
+    socket.setdefaulttimeout(timeout)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
     sock.sendto(SSDP_MSEARCH_QUERY, (SSDP_ADDR, SSDP_PORT))
@@ -60,11 +60,11 @@ def rxv_details(location):
     url_base_el = xml.find(URL_BASE_QUERY)
     if url_base_el is None:
         return None
-    control_url = xml.find(CONTROL_URL_QUERY).text
+    ctrl_url = xml.find(CONTROL_URL_QUERY).text
     model_name = xml.find(MODEL_NAME_QUERY).text
-    control_url = urljoin(url_base_el.text, control_url)
+    ctrl_url = urljoin(url_base_el.text, ctrl_url)
 
-    return RxvDetails(model_name, control_url)
+    return RxvDetails(ctrl_url, model_name)
 
 
 if __name__ == '__main__':

@@ -35,11 +35,12 @@ setup(
     zip_safe=False,
     cmdclass={'test': Tox},
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries",
+        "Topic :: Home Automation",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: Implementation :: PyPy"

@@ -2,13 +2,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 
-import io
 import re
 import socket
 import requests
-from urlparse import urljoin
 from collections import namedtuple
 import xml.etree.ElementTree as ET
+
+try:
+    from urllib.parse import urljoin
+except ImportError:
+    from urlparse import urljoin
+
 
 SSDP_ADDR = '239.255.255.250'
 SSDP_PORT = 1900
@@ -33,7 +37,7 @@ def discover(timeout=0.5):
     socket.setdefaulttimeout(timeout)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-    sock.sendto(SSDP_MSEARCH_QUERY, (SSDP_ADDR, SSDP_PORT))
+    sock.sendto(SSDP_MSEARCH_QUERY.encode("utf-8"), (SSDP_ADDR, SSDP_PORT))
 
     responses = []
     try:
@@ -44,7 +48,7 @@ def discover(timeout=0.5):
 
     results = []
     for res in responses:
-        m = re.search(r"LOCATION:(.+)", res)
+        m = re.search(r"LOCATION:(.+)", res.decode('utf-8'))
         if not m:
             continue
         url = m.group(1).strip()

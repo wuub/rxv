@@ -149,12 +149,12 @@ class RXV(object):
         request_text = ListGet.format(src_name=src_name)
         res = self._request('GET', request_text, main_zone=False)
 
-        ready = (res.iter("Menu_Status").next().text == "Ready")
-        layer = int(res.iter("Menu_Layer").next().text)
-        name = res.iter("Menu_Name").next().text
-        current_line = int(res.iter("Current_Line").next().text)
-        max_line = int(res.iter("Max_Line").next().text)
-        current_list = res.iter('Current_List').next()
+        ready = (next(res.iter("Menu_Status")).text == "Ready")
+        layer = int(next(res.iter("Menu_Layer")).text)
+        name = next(res.iter("Menu_Name")).text
+        current_line = int(next(res.iter("Current_Line")).text)
+        max_line = int(next(res.iter("Max_Line")).text)
+        current_list = next(res.iter('Current_List'))
 
         cl = {
             elt.tag: elt.find('Txt').text
@@ -215,7 +215,7 @@ class RXV(object):
         step = 1 if final_vol > start_vol else -1
         final_vol += step  # to make sure, we don't stop one dB before
 
-        for val in xrange(start_vol, final_vol, step):
+        for val in range(start_vol, final_vol, step):
             self.volume = val
             time.sleep(sleep)
 

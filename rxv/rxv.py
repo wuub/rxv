@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 
+import re
 import time
 import requests
+import warnings
 import xml.etree.ElementTree as ET
 from math import floor
 from collections import namedtuple
@@ -33,15 +35,15 @@ SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
 
 
-class RXV473(object):
+class RXV(object):
 
-    def __init__(self, ip):
-        self._ip = ip
+    def __init__(self, ctrl_url):
+        if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}.\d{1,3}", ctrl_url):
+            # backward compatibility: accept ip address as a contorl url
+            warnings.warn("Using IP address as a Control URL is deprecated")
+            ctrl_url = 'http://%s/YamahaRemoteControl/ctrl' % ctrl_url
+        self.ctrl_url = ctrl_url
         self._inputs_cache = None
-
-    @property
-    def ctrl_url(self):
-        return 'http://%s/YamahaRemoteControl/ctrl' % self._ip
 
     def _request(self, command, request_text, main_zone=True):
         if main_zone:

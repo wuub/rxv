@@ -1,3 +1,8 @@
-from rxv473 import RXV473
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import, print_function
 
-__all__ = ['RXV473']
+from .rxv import RXV
+from .ssdp import discover
+
+__all__ = ['RXV']

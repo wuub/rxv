@@ -6,10 +6,10 @@ Hacky Python interface to Yamaha RX-V*73 receivers (mainly  RX-V473)
 Authors
 =======
 
-* [@jnnt](/jnnt)
-* [@wuub](/wuub)
+* `@jnnt <https://github.com/jnnt>`_
+* `@wuub <https://github.com/wuub>`_
 
 Contributors
 ============
 
-* [@briancline](/briancline)
+* `@briancline <https://github.com/briancline>`_

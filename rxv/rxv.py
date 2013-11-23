@@ -213,6 +213,7 @@ class RXV(object):
     def volume_fade(self, final_vol, sleep=0.5):
         start_vol = int(floor(self.volume))
         step = 1 if final_vol > start_vol else -1
+        final_vol += step  # to make sure, we don't stop one dB before
 
         for val in xrange(start_vol, final_vol, step):
             self.volume = val

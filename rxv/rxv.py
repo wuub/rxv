@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from math import floor
 from collections import namedtuple
 
-from .exceptions import ReponseException
+from .exceptions import ReponseException, MenuUnavailable
 
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
@@ -136,14 +136,14 @@ class RXV(object):
 
         src_name = self.inputs()[self.input]
         request_text = ConfigGet.format(src_name=src_name)
-        config = self._request('GET', request_text)
+        config = self._request('GET', request_text, main_zone=False)
 
         avail = config.iter('Feature_Availability').next()
         return avail.text == 'Ready'
 
     def menu_status(self):
         if self.input not in self.inputs() or not self.inputs()[self.input]:
-            return True
+            raise MenuUnavailable(self.input)
 
         src_name = self.inputs()[self.input]
         request_text = ListGet.format(src_name=src_name)
@@ -167,7 +167,7 @@ class RXV(object):
 
     def menu_jump_line(self, lineno):
         if self.input not in self.inputs() or not self.inputs()[self.input]:
-            return None
+            raise MenuUnavailable(self.input)
 
         src_name = self.inputs()[self.input]
         request_text = ListControlJumpLine.format(src_name=src_name, lineno=lineno)
@@ -175,7 +175,7 @@ class RXV(object):
 
     def _menu_cursor(self, action):
         if self.input not in self.inputs() or not self.inputs()[self.input]:
-            return None
+            raise MenuUnavailable(self.input)
 
         src_name = self.inputs()[self.input]
         request_text = ListControlCursor.format(src_name=src_name, action=action)

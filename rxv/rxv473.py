@@ -12,26 +12,25 @@ from .exceptions import ReponseException
 
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
-MenuStatus = namedtuple("MenuStatus",
-                        "ready layer name current_line max_line current_list")
+MenuStatus = namedtuple("MenuStatus", "ready layer name current_line max_line current_list")
 
-YamahaCommand = '<YAMAHA_AV cmd="%s">%s</YAMAHA_AV>'
-MainZone = '<Main_Zone>%s</Main_Zone>'
+GetParam = 'GetParam'
+YamahaCommand = '<YAMAHA_AV cmd="{command}">{payload}</YAMAHA_AV>'
+MainZone = '<Main_Zone>{request_text}</Main_Zone>'
 BasicStatusGet = '<Basic_Status>GetParam</Basic_Status>'
-PowerControl = '<Power_Control><Power>%s</Power></Power_Control>'
-PowerControlSleep = '<Power_Control><Sleep>%s</Sleep></Power_Control>'
-Input = '<Input><Input_Sel>%s</Input_Sel></Input>'
-InputSelItem = '<Input><Input_Sel_Item>%s</Input_Sel_Item></Input>'
-ConfigGet = '<%s><Config>GetParam</Config></%s>'
-ListGet = '<%s><List_Info>GetParam</List_Info></%s>'
-ListControlJumpLine = '<%s><List_Control><Jump_Line>%s</Jump_Line>' \
-                      '</List_Control></%s>'
-ListControlCursor = '<%s><List_Control><Cursor>%s</Cursor></List_Control></%s>'
-VolumeLevel = '<Volume><Lvl>%s</Lvl></Volume>'
-VolumeLevelSet = VolumeLevel % '<Val>%s</Val><Exp>%s</Exp><Unit>%s</Unit>'
-SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_%s'\
+PowerControl = '<Power_Control><Power>{state}</Power></Power_Control>'
+PowerControlSleep = '<Power_Control><Sleep>{sleep_value}</Sleep></Power_Control>'
+Input = '<Input><Input_Sel>{input_name}</Input_Sel></Input>'
+InputSelItem = '<Input><Input_Sel_Item>{input_name}</Input_Sel_Item></Input>'
+ConfigGet = '<{src_name}><Config>GetParam</Config></{src_name}>'
+ListGet = '<{src_name}><List_Info>GetParam</List_Info></{src_name}>'
+ListControlJumpLine = '<{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line>' \
+                      '</List_Control></{src_name}>'
+ListControlCursor = '<{src_name}><List_Control><Cursor>{action}</Cursor></List_Control></{src_name}>'
+VolumeLevel = '<Volume><Lvl>{value}</Lvl></Volume>'
+VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
+SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
-
 
 
 class RXV473(object):
@@ -45,11 +44,17 @@ class RXV473(object):
         return 'http://%s/YamahaRemoteControl/ctrl' % self._ip
 
     def _request(self, command, request_text, main_zone=True):
-        inner_text = MainZone % request_text if main_zone else request_text
-        request_text = (YamahaCommand % (command, inner_text))
-        res = requests.post(self.ctrl_url,
-                            data=request_text,
-                            headers={"Content-Type": "text/xml"})
+        if main_zone:
+            payload = MainZone.format(request_text=request_text)
+        else:
+            payload = request_text
+
+        request_text = YamahaCommand.format(command=command, payload=payload)
+        res = requests.post(
+            self.ctrl_url,
+            data=request_text,
+            headers={"Content-Type": "text/xml"}
+        )
         response = ET.XML(res.content)
         if response.get("RC") != "0":
             raise ReponseException(res.content)
@@ -69,7 +74,7 @@ class RXV473(object):
 
     @property
     def on(self):
-        request_text = PowerControl % 'GetParam'
+        request_text = PowerControl.format(state=GetParam)
         response = self._request('GET', request_text)
         power = response.find("Main_Zone/Power_Control/Power").text
         assert power in ["On", "Standby"]
@@ -79,7 +84,7 @@ class RXV473(object):
     def on(self, state):
         assert state in [True, False]
         new_state = "On" if state else "Standby"
-        request_text = PowerControl % new_state
+        request_text = PowerControl.format(state=new_state)
         response = self._request('PUT', request_text)
         return response
 
@@ -88,19 +93,19 @@ class RXV473(object):
 
     @property
     def input(self):
-        request_text = Input % 'GetParam'
+        request_text = Input.format(input_name=GetParam)
         response = self._request('GET', request_text)
         return response.find("Main_Zone/Input/Input_Sel").text
 
     @input.setter
     def input(self, input_name):
         assert input_name in self.inputs()
-        request_text = Input % input_name
+        request_text = Input.format(input_name=input_name)
         self._request('PUT', request_text)
 
     def inputs(self):
         if not self._inputs_cache:
-            request_text = InputSelItem % 'GetParam'
+            request_text = InputSelItem.format(input_name=GetParam)
             res = self._request('GET', request_text)
             self._inputs_cache = dict(zip((elt.text
                                            for elt in res.iter('Param')),
@@ -113,7 +118,7 @@ class RXV473(object):
             return True  # input is instantly ready
 
         src_name = self.inputs()[self.input]
-        request_text = ConfigGet % (src_name, src_name)
+        request_text = ConfigGet.format(src_name=src_name)
         config = self._request('GET', request_text)
 
         avail = config.iter('Feature_Availability').next()
@@ -124,8 +129,8 @@ class RXV473(object):
             return True
 
         src_name = self.inputs()[self.input]
-        request_text = ListGet % (src_name, src_name)
-        res = self._request('GET', request_text)
+        request_text = ListGet.format(src_name=src_name)
+        res = self._request('GET', request_text, main_zone=False)
 
         ready = (res.iter("Menu_Status").next().text == "Ready")
         layer = int(res.iter("Menu_Layer").next().text)
@@ -134,9 +139,11 @@ class RXV473(object):
         max_line = int(res.iter("Max_Line").next().text)
         current_list = res.iter('Current_List').next()
 
-        cl = {elt.tag: elt.find('Txt').text
-              for elt in current_list.getchildren()
-              if elt.find('Attribute').text != 'Unselectable'}
+        cl = {
+            elt.tag: elt.find('Txt').text
+            for elt in current_list.getchildren()
+            if elt.find('Attribute').text != 'Unselectable'
+        }
 
         status = MenuStatus(ready, layer, name, current_line, max_line, cl)
         return status
@@ -146,16 +153,16 @@ class RXV473(object):
             return None
 
         src_name = self.inputs()[self.input]
-        request_text = ListControlJumpLine % (src_name, lineno, src_name)
-        return self._request('PUT', request_text)
+        request_text = ListControlJumpLine.format(src_name=src_name, lineno=lineno)
+        return self._request('PUT', request_text, main_zone=False)
 
     def _menu_cursor(self, action):
         if self.input not in self.inputs() or not self.inputs()[self.input]:
             return None
 
         src_name = self.inputs()[self.input]
-        request_text = ListControlCursor % (src_name, action, src_name)
-        return self._request('PUT', request_text)
+        request_text = ListControlCursor.format(src_name=src_name, action=action)
+        return self._request('PUT', request_text, main_zone=False)
 
     def menu_up(self):
         return self._menu_cursor("Up")
@@ -171,7 +178,7 @@ class RXV473(object):
 
     @property
     def volume(self):
-        request_text = VolumeLevel % 'GetParam'
+        request_text = VolumeLevel.format(value=GetParam)
         response = self._request('GET', request_text)
         vol = response.find('Main_Zone/Volume/Lvl/Val').text
         return float(vol) / 10.0
@@ -182,7 +189,8 @@ class RXV473(object):
         exp = 1
         unit = 'dB'
 
-        request_text = VolumeLevelSet % (value, exp, unit)
+        volume_val = VolumeLevelValue.format(val=value, exp=exp, unit=unit)
+        request_text = VolumeLevel.format(value=volume_val)
         self._request('PUT', request_text)
 
     def volume_fade(self, final_vol, sleep=0.5):
@@ -194,17 +202,17 @@ class RXV473(object):
             time.sleep(sleep)
 
     def _direct_sel(self, lineno):
-        request_text = SelectNetRadioLine % lineno
-        return self._request('PUT', request_text)
+        request_text = SelectNetRadioLine.format(lineno=lineno)
+        return self._request('PUT', request_text, main_zone=False)
 
     @property
     def sleep(self):
-        request_text = PowerControlSleep % 'GetParam'
+        request_text = PowerControlSleep.format(state=GetParam)
         response = self._request('GET', request_text)
         sleep = response.find("Main_Zone/Power_Control/Sleep").text
         return sleep
 
     @sleep.setter
     def sleep(self, value):
-        request_text = PowerControlSleep % value
+        request_text = PowerControlSleep.format(sleep_value=value)
         self._request('PUT', request_text)

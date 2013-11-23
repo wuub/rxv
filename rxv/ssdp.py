@@ -3,9 +3,9 @@
 from __future__ import division, absolute_import, print_function
 
 import io
+import re
 import socket
 import requests
-import mimetools
 from urlparse import urljoin
 from collections import namedtuple
 import xml.etree.ElementTree as ET
@@ -44,9 +44,11 @@ def discover(timeout=0.5):
 
     results = []
     for res in responses:
-        _, headers = res.split('\r\n', 1)
-        msg = mimetools.Message(io.StringIO(headers.decode("utf-8")))
-        res = rxv_details(msg['LOCATION'])
+        m = re.search(r"LOCATION:(.+)", res)
+        if not m:
+            continue
+        url = m.group(1).strip()
+        res = rxv_details(url)
         if res:
             results.append(res)
 

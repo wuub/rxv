@@ -3,6 +3,16 @@ rxv
 
 Automation Library for Yamaha RX-V473, RX-V573, RX-V673, RX-V773 receivers
 
+Installation
+============
+
+Use pip::
+
+  $ pip install rxv
+  or
+  $ pip install --use-wheel rxv
+
+
 Usage
 =====
 

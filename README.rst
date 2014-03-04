@@ -27,7 +27,7 @@ In most cases **rxv** module will manage to obtain locations of local compatible
   >>> rx.on = True
   >>> rx.volume
   -51.0
-  >>> rx.inputs
+  >>> rx.inputs()
   {'AUDIO': None,
   'HDMI1': None,
   'HDMI2': None,

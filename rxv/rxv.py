@@ -55,10 +55,10 @@ class RXV(object):
         )
 
     def __str__(self):
-        return self.__unicode__().encode("utf-8")
+        return self.__unicode__()
 
     def __repr__(self):
-        return self.__str__()
+        return self.__unicode__()
 
     def _request(self, command, request_text, main_zone=True):
         if main_zone:

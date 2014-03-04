@@ -138,7 +138,7 @@ class RXV(object):
         request_text = ConfigGet.format(src_name=src_name)
         config = self._request('GET', request_text, main_zone=False)
 
-        avail = config.iter('Feature_Availability').next()
+        avail = next(config.iter('Feature_Availability'))
         return avail.text == 'Ready'
 
     def menu_status(self):

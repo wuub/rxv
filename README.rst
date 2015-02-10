@@ -61,3 +61,4 @@ Contributors
 ============
 
 * `@briancline <https://github.com/briancline>`_
+* `@rthill <https://github.com/rthill>`_

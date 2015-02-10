@@ -187,6 +187,12 @@ class RXV(object):
     def menu_down(self):
         return self._menu_cursor("Down")
 
+    def menu_left(self):
+        return self._menu_cursor("Left")
+
+    def menu_right(self):
+        return self._menu_cursor("Right")
+
     def menu_sel(self):
         return self._menu_cursor("Sel")
 

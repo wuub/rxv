@@ -248,7 +248,7 @@ class RXV(object):
 
     @property
     def sleep(self):
-        request_text = PowerControlSleep.format(state=GetParam)
+        request_text = PowerControlSleep.format(sleep_value=GetParam)
         response = self._request('GET', request_text)
         sleep = response.find("Main_Zone/Power_Control/Sleep").text
         return sleep

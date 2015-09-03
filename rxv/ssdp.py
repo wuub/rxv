@@ -31,7 +31,7 @@ MODEL_NAME_QUERY = "{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-or
 RxvDetails = namedtuple("RxvDetails", "ctrl_url model_name")
 
 
-def discover(timeout=0.5):
+def discover(timeout=1.5):
     """Crude SSDP discovery. Returns a list of RxvDetails objects
        with data about Yamaha Receivers in local network"""
     socket.setdefaulttimeout(timeout)

@@ -26,9 +26,9 @@ SSDP_MSEARCH_QUERY = \
 URL_BASE_QUERY = '*/{urn:schemas-yamaha-com:device-1-0}X_URLBase'
 CONTROL_URL_QUERY = '***/{urn:schemas-yamaha-com:device-1-0}X_controlURL'
 MODEL_NAME_QUERY = "{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}modelName"
+FRIENDLY_NAME_QUERY = "{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}friendlyName"
 
-
-RxvDetails = namedtuple("RxvDetails", "ctrl_url model_name")
+RxvDetails = namedtuple("RxvDetails", "ctrl_url model_name friendly_name")
 
 
 def discover(timeout=1.5):
@@ -68,9 +68,10 @@ def rxv_details(location):
         return None
     ctrl_url = xml.find(CONTROL_URL_QUERY).text
     model_name = xml.find(MODEL_NAME_QUERY).text
+    friendly_name = xml.find(FRIENDLY_NAME_QUERY).text
     ctrl_url = urljoin(url_base_el.text, ctrl_url)
 
-    return RxvDetails(ctrl_url, model_name)
+    return RxvDetails(ctrl_url, model_name, friendly_name)
 
 
 if __name__ == '__main__':

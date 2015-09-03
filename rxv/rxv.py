@@ -12,6 +12,10 @@ from collections import namedtuple
 
 from .exceptions import ReponseException, MenuUnavailable
 
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
 MenuStatus = namedtuple("MenuStatus", "ready layer name current_line max_line current_list")
@@ -38,13 +42,14 @@ SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
 
 class RXV(object):
 
-    def __init__(self, ctrl_url, model_name="Unknown"):
+    def __init__(self, ctrl_url, model_name="Unknown", friendly_name='Unknown'):
         if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}.\d{1,3}", ctrl_url):
             # backward compatibility: accept ip address as a contorl url
             warnings.warn("Using IP address as a Control URL is deprecated")
             ctrl_url = 'http://%s/YamahaRemoteControl/ctrl' % ctrl_url
         self.ctrl_url = ctrl_url
         self.model_name = model_name
+        self.friendly_name = friendly_name
         self._inputs_cache = None
 
     def __unicode__(self):
@@ -257,3 +262,14 @@ class RXV(object):
     def sleep(self, value):
         request_text = PowerControlSleep.format(sleep_value=value)
         self._request('PUT', request_text)
+
+    @property
+    def small_image_url(self):
+        host = urlparse(self.ctrl_url).hostname
+        return "http://{}:8080/BCO_device_sm_icon.png".format(host)
+
+    @property
+    def large_image_url(self):
+        host = urlparse(self.ctrl_url).hostname
+        return "http://{}:8080/BCO_device_lrg_icon.png".format(host)
+

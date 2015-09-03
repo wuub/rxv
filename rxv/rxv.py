@@ -31,6 +31,7 @@ ListControlJumpLine = '<{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line>
 ListControlCursor = '<{src_name}><List_Control><Cursor>{action}</Cursor></List_Control></{src_name}>'
 VolumeLevel = '<Volume><Lvl>{value}</Lvl></Volume>'
 VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
+VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
 SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
 
@@ -224,6 +225,22 @@ class RXV(object):
         for val in range(start_vol, final_vol, step):
             self.volume = val
             time.sleep(sleep)
+
+    @property
+    def mute(self):
+        request_text = VolumeMute.format(state=GetParam)
+        response = self._request('GET', request_text)
+        mute = response.find('Main_Zone/Volume/Mute').text
+        assert mute in ["On", "Off"]
+        return mute == "On"
+
+    @mute.setter
+    def mute(self, state):
+        assert state in [True, False]
+        new_state = "On" if state else "Off"
+        request_text = VolumeMute.format(state=new_state)
+        response = self._request('PUT', request_text)
+        return response
 
     def _direct_sel(self, lineno):
         request_text = SelectNetRadioLine.format(lineno=lineno)

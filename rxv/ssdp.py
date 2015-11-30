@@ -62,7 +62,10 @@ def discover(timeout=1.5):
 def rxv_details(location):
     """Looks under given UPNP url, and checks if Yamaha amplituner lives there
        returns RxvDetails if yes, None otherwise"""
-    xml = ET.XML(requests.get(location).content)
+    try:
+        xml = ET.XML(requests.get(location).content)
+    except:
+        return None
     url_base_el = xml.find(URL_BASE_QUERY)
     if url_base_el is None:
         return None

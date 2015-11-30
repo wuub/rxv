@@ -18,6 +18,7 @@ except ImportError:
     from urlparse import urlparse
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
+PlayStatus = namedtuple("PlayStatus", "playing artist album song")
 MenuStatus = namedtuple("MenuStatus", "ready layer name current_line max_line current_list")
 
 GetParam = 'GetParam'
@@ -29,6 +30,7 @@ PowerControlSleep = '<Power_Control><Sleep>{sleep_value}</Sleep></Power_Control>
 Input = '<Input><Input_Sel>{input_name}</Input_Sel></Input>'
 InputSelItem = '<Input><Input_Sel_Item>{input_name}</Input_Sel_Item></Input>'
 ConfigGet = '<{src_name}><Config>GetParam</Config></{src_name}>'
+PlayGet = '<{src_name}><Play_Info>GetParam</Play_Info></{src_name}>'
 ListGet = '<{src_name}><List_Info>GetParam</List_Info></{src_name}>'
 ListControlJumpLine = '<{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line>' \
                       '</List_Control></{src_name}>'
@@ -146,6 +148,22 @@ class RXV(object):
 
         avail = next(config.iter('Feature_Availability'))
         return avail.text == 'Ready'
+
+    def play_status(self):
+        if self.input not in self.inputs() or not self.inputs()[self.input]:
+            return None
+
+        src_name = self.inputs()[self.input]
+        request_text = PlayGet.format(src_name=src_name)
+        res = self._request('GET', request_text, main_zone=False)
+
+        playing = (next(res.iter("Playback_Info")).text == "Play")
+        artist = next(res.iter("Artist")).text
+        album = next(res.iter("Album")).text
+        song = next(res.iter("Song")).text
+
+        status = PlayStatus(playing, artist, album, song)
+        return status
 
     def menu_status(self):
         if self.input not in self.inputs() or not self.inputs()[self.input]:

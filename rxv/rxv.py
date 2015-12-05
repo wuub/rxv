@@ -138,11 +138,16 @@ class RXV(object):
                                            for elt in res.iter("Src_Name"))))
         return self._inputs_cache
 
+    def _src_name(self, cur_input):
+        if cur_input not in self.inputs():
+            return None
+        return self.inputs()[cur_input]
+
     def is_ready(self):
-        if self.input not in self.inputs() or not self.inputs()[self.input]:
+        src_name = self._src_name(self.input)
+        if not src_name:
             return True  # input is instantly ready
 
-        src_name = self.inputs()[self.input]
         request_text = ConfigGet.format(src_name=src_name)
         config = self._request('GET', request_text, main_zone=False)
 
@@ -150,10 +155,10 @@ class RXV(object):
         return avail.text == 'Ready'
 
     def play_status(self):
-        if self.input not in self.inputs() or not self.inputs()[self.input]:
+        src_name = self._src_name(self.input)
+        if not src_name:
             return None
 
-        src_name = self.inputs()[self.input]
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, main_zone=False)
 
@@ -166,10 +171,11 @@ class RXV(object):
         return status
 
     def menu_status(self):
-        if self.input not in self.inputs() or not self.inputs()[self.input]:
-            raise MenuUnavailable(self.input)
+        cur_input = self.input
+        src_name = self._src_name(cur_input)
+        if not src_name:
+            raise MenuUnavailable(cur_input)
 
-        src_name = self.inputs()[self.input]
         request_text = ListGet.format(src_name=src_name)
         res = self._request('GET', request_text, main_zone=False)
 
@@ -190,18 +196,20 @@ class RXV(object):
         return status
 
     def menu_jump_line(self, lineno):
-        if self.input not in self.inputs() or not self.inputs()[self.input]:
-            raise MenuUnavailable(self.input)
+        cur_input = self.input
+        src_name = self._src_name(cur_input)
+        if not src_name:
+            raise MenuUnavailable(cur_input)
 
-        src_name = self.inputs()[self.input]
         request_text = ListControlJumpLine.format(src_name=src_name, lineno=lineno)
         return self._request('PUT', request_text, main_zone=False)
 
     def _menu_cursor(self, action):
-        if self.input not in self.inputs() or not self.inputs()[self.input]:
-            raise MenuUnavailable(self.input)
+        cur_input = self.input
+        src_name = self._src_name(cur_input)
+        if not src_name:
+            raise MenuUnavailable(cur_input)
 
-        src_name = self.inputs()[self.input]
         request_text = ListControlCursor.format(src_name=src_name, action=action)
         return self._request('PUT', request_text, main_zone=False)
 

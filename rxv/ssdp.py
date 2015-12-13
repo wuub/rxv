@@ -48,7 +48,7 @@ def discover(timeout=1.5):
 
     results = []
     for res in responses:
-        m = re.search(r"LOCATION:(.+)", res.decode('utf-8'))
+        m = re.search(r"LOCATION:(.+)", res.decode('utf-8'), re.IGNORECASE)
         if not m:
             continue
         url = m.group(1).strip()

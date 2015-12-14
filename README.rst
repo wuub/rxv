@@ -63,3 +63,4 @@ Contributors
 * `@briancline <https://github.com/briancline>`_
 * `@rthill <https://github.com/rthill>`_
 * `@jtai <https://github.com/jtai>`_
+* `@ahocquet <https://github.com/ahocquet>`_

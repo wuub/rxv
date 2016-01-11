@@ -7,7 +7,7 @@ class RXVException(Exception):
     pass
 
 
-class ReponseException(RXVException):
+class ResponseException(RXVException):
     """Exception raised when yamaha receiver responded with an error code"""
     pass
 

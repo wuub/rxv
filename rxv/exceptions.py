@@ -11,6 +11,9 @@ class ResponseException(RXVException):
     """Exception raised when yamaha receiver responded with an error code"""
     pass
 
+ReponseException = ResponseException
+
+
 class MenuUnavailable(RXVException):
     """Menu control unavailable for current input"""
     pass

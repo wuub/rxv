@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from math import floor
 from collections import namedtuple
 
-from .exceptions import ReponseException, MenuUnavailable
+from .exceptions import ResponseException, MenuUnavailable
 
 try:
     from urllib.parse import urlparse
@@ -82,7 +82,7 @@ class RXV(object):
         )
         response = ET.XML(res.content)
         if response.get("RC") != "0":
-            raise ReponseException(res.content)
+            raise ResponseException(res.content)
         return response
 
     @property

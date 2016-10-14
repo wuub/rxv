@@ -312,6 +312,38 @@ class RXV(object):
         request_text = SelectNetRadioLine.format(lineno=lineno)
         return self._request('PUT', request_text, zone_cmd=False)
 
+    def net_radio(self, path):
+        """Play net radio at the specified path.
+
+        This lets you play a NET_RADIO address in a single command
+        with by encoding it with > as separators. For instance:
+
+            Bookmarks>Internet>Radio Paradise
+
+        It does this by push commands, then looping and making sure
+        the menu is in a ready state before we try to push the next
+        one. A sufficient number of iterations are allowed for to
+        ensure we give it time to get there.
+
+        TODO: better error handling if we some how time out
+        """
+        layers = path.split(">")
+        self.input = "NET RADIO"
+
+        for attempt in range(20):
+            menu = self.menu_status()
+            if menu.ready:
+                for line, value in menu.current_list.items():
+                    if value == layers[menu.layer - 1]:
+                        lineno = line[5:]
+                        self._direct_sel(lineno)
+                        if menu.layer == len(layers):
+                            return
+                        break
+            else:
+                # print("Sleeping because we are not ready yet")
+                time.sleep(1)
+
     @property
     def sleep(self):
         request_text = PowerControlSleep.format(sleep_value=GetParam)

@@ -65,6 +65,7 @@ Contributors
 * `@jtai <https://github.com/jtai>`_
 * `@ahocquet <https://github.com/ahocquet>`_
 * `@Raynes <https:/github.com/Raynes>`_
+* `@sdague <https://github.com/sdague>`_
 
 Users
 =====

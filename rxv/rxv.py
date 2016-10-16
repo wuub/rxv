@@ -53,7 +53,7 @@ class RXV(object):
             warnings.warn("Using IP address as a Control URL is deprecated")
             ctrl_url = 'http://%s/YamahaRemoteControl/ctrl' % ctrl_url
         self.ctrl_url = ctrl_url
-        self.unit_desc_url = unit_desc_url
+        self.unit_desc_url = unit_desc_url or re.sub('ctrl$', 'desc.xml', ctrl_url)
         self.model_name = model_name
         self.friendly_name = friendly_name
         self._inputs_cache = None

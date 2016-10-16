@@ -19,7 +19,7 @@ except ImportError:
     from urlparse import urlparse
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
-PlayStatus = namedtuple("PlayStatus", "playing artist album song")
+PlayStatus = namedtuple("PlayStatus", "playing artist album song station")
 MenuStatus = namedtuple("MenuStatus", "ready layer name current_line max_line current_list")
 
 GetParam = 'GetParam'
@@ -197,12 +197,21 @@ class RXV(object):
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, zone_cmd=False)
 
-        playing = (next(res.iter("Playback_Info")).text == "Play")
-        artist = next(res.iter("Artist")).text
-        album = next(res.iter("Album")).text
-        song = next(res.iter("Song")).text
+        playing = (res.find(".//Playback_Info").text == "Play")
 
-        status = PlayStatus(playing, artist, album, song)
+        def safe_get(doc, name):
+            tag = doc.find(".//%s" % name)
+            if tag is not None:
+                return tag.text or ""
+            else:
+                return ""
+
+        artist = safe_get(res, "Artist")
+        album = safe_get(res, "Album")
+        song = safe_get(res, "Song")
+        station = safe_get(res, "Station")
+
+        status = PlayStatus(playing, artist, album, song, station)
         return status
 
     def menu_status(self):

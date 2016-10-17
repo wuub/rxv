@@ -11,12 +11,17 @@ import xml.etree.ElementTree as ET
 from math import floor
 from collections import namedtuple
 
-from .exceptions import ResponseException, MenuUnavailable
+from .exceptions import ResponseException, MenuUnavailable, PlaybackUnavailable
 
 try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
+
+# Add sources that support playback, i.e. play, pause, etc.
+SOURCES_SUPPORTING_PLAYBACK = [
+    'SERVER', 'USB', 'NET RADIO', 'NAPSTER',
+    'TUNER', 'iPod (USB)', 'AirPlay']
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
 PlayStatus = namedtuple("PlayStatus", "playing artist album song station")
@@ -32,6 +37,7 @@ Input = '<Input><Input_Sel>{input_name}</Input_Sel></Input>'
 InputSelItem = '<Input><Input_Sel_Item>{input_name}</Input_Sel_Item></Input>'
 ConfigGet = '<{src_name}><Config>GetParam</Config></{src_name}>'
 PlayGet = '<{src_name}><Play_Info>GetParam</Play_Info></{src_name}>'
+PlayControl = '<{src_name}><Play_Control><Playback>{action}</Playback></Play_Control></{src_name}>'
 ListGet = '<{src_name}><List_Info>GetParam</List_Info></{src_name}>'
 ListControlJumpLine = '<{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line>' \
                       '</List_Control></{src_name}>'
@@ -123,6 +129,40 @@ class RXV(object):
 
     def off(self):
         return self.on(False)
+
+    def is_playback_supported(self, input_source=None):
+        if input_source is None:
+            input_source = self.input
+        return input_source in SOURCES_SUPPORTING_PLAYBACK
+
+    def play(self):
+        self._playback_control('Play')
+
+    def pause(self):
+        self._playback_control('Pause')
+
+    def stop(self):
+        self._playback_control('Stop')
+
+    def next(self):
+        self._playback_control('Skip Fwd')
+
+    def previous(self):
+        self._playback_control('Skip Rev')
+
+    def _playback_control(self, action):
+        # Cache current input to "save" one HTTP-request
+        input_source = self.input
+        if not self.is_playback_supported(input_source):
+            raise PlaybackUnavailable(input_source, action)
+
+        src_name = self._src_name(input_source)
+        if not src_name:
+            return None
+
+        request_text = PlayControl.format(src_name=src_name, action=action)
+        response = self._request('PUT', request_text, zone_cmd=False)
+        return response
 
     @property
     def input(self):

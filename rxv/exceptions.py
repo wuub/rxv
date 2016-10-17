@@ -17,3 +17,9 @@ ReponseException = ResponseException
 class MenuUnavailable(RXVException):
     """Menu control unavailable for current input"""
     pass
+
+
+class PlaybackUnavailable(RXVException):
+    """Raised when playback function called on unsupported source."""
+    def __init__(self, source, action):
+        super().__init__('{} does not support {}'.format(source, action))

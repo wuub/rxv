@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
-import re
 import copy
+import re
 import time
-import requests
 import warnings
 import xml.etree.ElementTree as ET
-from math import floor
 from collections import namedtuple
+from math import floor
 
-from .exceptions import ResponseException, MenuUnavailable, PlaybackUnavailable
+import requests
+
+from .exceptions import MenuUnavailable, PlaybackUnavailable, ResponseException
 
 try:
     from urllib.parse import urlparse
@@ -41,7 +42,8 @@ PlayControl = '<{src_name}><Play_Control><Playback>{action}</Playback></Play_Con
 ListGet = '<{src_name}><List_Info>GetParam</List_Info></{src_name}>'
 ListControlJumpLine = '<{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line>' \
                       '</List_Control></{src_name}>'
-ListControlCursor = '<{src_name}><List_Control><Cursor>{action}</Cursor></List_Control></{src_name}>'
+ListControlCursor = '<{src_name}><List_Control><Cursor>{action}</Cursor>'\
+                    '</List_Control></{src_name}>'
 VolumeLevel = '<Volume><Lvl>{value}</Lvl></Volume>'
 VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
@@ -211,7 +213,6 @@ class RXV(object):
             zone_ctrl.zone = zone
             controllers.append(zone_ctrl)
         return controllers
-
 
     def _src_name(self, cur_input):
         if cur_input not in self.inputs():

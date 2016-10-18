@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
 
 import re
 import socket
-import requests
-from collections import namedtuple
 import xml.etree.ElementTree as ET
+from collections import namedtuple
+
+import requests
 
 try:
     from urllib.parse import urljoin
@@ -16,18 +17,25 @@ except ImportError:
 
 SSDP_ADDR = '239.255.255.250'
 SSDP_PORT = 1900
-SSDP_MSEARCH_QUERY = \
-   'M-SEARCH * HTTP/1.1\r\n' \
-   'MX: 1\r\n' \
-   'HOST: 239.255.255.250:1900\r\n' \
-   'MAN: "ssdp:discover"\r\n' \
-   'ST: upnp:rootdevice\r\n\r\n'
+SSDP_MSEARCH_QUERY = (
+    'M-SEARCH * HTTP/1.1\r\n'
+    'MX: 1\r\n'
+    'HOST: 239.255.255.250:1900\r\n'
+    'MAN: "ssdp:discover"\r\n'
+    'ST: upnp:rootdevice\r\n\r\n'
+)
 
 URL_BASE_QUERY = '*/{urn:schemas-yamaha-com:device-1-0}X_URLBase'
 CONTROL_URL_QUERY = '***/{urn:schemas-yamaha-com:device-1-0}X_controlURL'
 UNITDESC_URL_QUERY = '***/{urn:schemas-yamaha-com:device-1-0}X_unitDescURL'
-MODEL_NAME_QUERY = "{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}modelName"
-FRIENDLY_NAME_QUERY = "{urn:schemas-upnp-org:device-1-0}device/{urn:schemas-upnp-org:device-1-0}friendlyName"
+MODEL_NAME_QUERY = (
+    "{urn:schemas-upnp-org:device-1-0}device"
+    "/{urn:schemas-upnp-org:device-1-0}modelName"
+)
+FRIENDLY_NAME_QUERY = (
+    "{urn:schemas-upnp-org:device-1-0}device"
+    "/{urn:schemas-upnp-org:device-1-0}friendlyName"
+)
 
 RxvDetails = namedtuple("RxvDetails", "ctrl_url unit_desc_url, model_name friendly_name")
 

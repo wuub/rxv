@@ -71,11 +71,12 @@ Contributors
 * `@rthill <https://github.com/rthill>`_
 * `@jtai <https://github.com/jtai>`_
 * `@ahocquet <https://github.com/ahocquet>`_
-* `@Raynes <https:/github.com/Raynes>`_
+* `@Raynes <https://github.com/Raynes>`_
 * `@sdague <https://github.com/sdague>`_
 * `@postlund <https://github.com/postlund>`_
 
 Users
 =====
 
+* `Home Assistant <https://github.com/home-assistant/home-assistant/>`_
 * `rxvc <https://github.com/Raynes/rxvc>`_

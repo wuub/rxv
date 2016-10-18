@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-import rxv
 import time
 
+import rxv
 
 rx = None
+
 
 def setup_module(module):
     receivers = rxv.find()
@@ -20,7 +21,7 @@ def teardown_module(module):
 
 
 def test_on_off():
-    assert rx.on == False, "reciver should be turned off"
+    assert rx.on is False, "reciver should be turned off"
     rx.on = True
     time.sleep(1.0)
     assert rx.on

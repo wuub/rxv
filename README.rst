@@ -38,6 +38,13 @@ In most cases **rxv** module will manage to obtain locations of local compatible
   >>> rx.input = "HDMI1"
   >>> rx.input
   "HDMI1"
+  >>> rx.is_playback_supported()
+  False
+  >>> rx.input = "AirPlay"
+  >>> rx.is_playback_supported()
+  True
+  >>> rx.play()
+  >>> rx.next()
 
 
 If SSDP causes you some problems, `ctrl_url` can be provided by hand.::
@@ -66,6 +73,7 @@ Contributors
 * `@ahocquet <https://github.com/ahocquet>`_
 * `@Raynes <https:/github.com/Raynes>`_
 * `@sdague <https://github.com/sdague>`_
+* `@postlund <https://github.com/postlund>`_
 
 Users
 =====

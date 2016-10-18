@@ -22,7 +22,7 @@ class Tox(TestCommand):
 
 setup(
     name='rxv',
-    version='0.2.0',
+    version='0.3.0',
     description='Automation Library for Yamaha RX-V473, RX-V573, RX-V673, RX-V773 receivers',
     long_description=open('README.rst').read(),
     author='Wojciech Bederski',

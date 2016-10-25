@@ -3,6 +3,7 @@
 from __future__ import division, absolute_import, print_function
 
 from .rxv import RXV
+from .rxv import PlaybackSupport
 from . import ssdp
 
 __all__ = ['RXV']

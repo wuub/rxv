@@ -19,10 +19,30 @@ try:
 except ImportError:
     from urlparse import urlparse
 
-# Add sources that support playback, i.e. play, pause, etc.
-SOURCES_SUPPORTING_PLAYBACK = [
-    'SERVER', 'USB', 'NET RADIO', 'NAPSTER',
-    'TUNER', 'iPod (USB)', 'AirPlay']
+# Used as an enum to indicate support for individual playback controls
+class PlaybackSupport:
+    NONE  = 0
+
+    PLAY  = (1 << 0)
+    STOP  = (1 << 1)
+    PAUSE = (1 << 2)
+    NEXT  = (1 << 3)
+    PREV  = (1 << 4)
+
+    BASIC = (PLAY | STOP | PAUSE)
+    NAVIGATION = (NEXT | PREV)
+    ALL   = (BASIC | NAVIGATION)
+
+# Add sources that support playback and what they support
+SOURCES_SUPPORTING_PLAYBACK = {
+    'SERVER': PlaybackSupport.ALL,
+    'USB': PlaybackSupport.ALL,
+    'NET RADIO': PlaybackSupport.BASIC,
+    'NAPSTER': PlaybackSupport.ALL,
+    'TUNER': PlaybackSupport.ALL,
+    'iPod (USB)': PlaybackSupport.ALL,
+    'AirPlay': PlaybackSupport.ALL
+}
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
 PlayStatus = namedtuple("PlayStatus", "playing artist album song station")
@@ -131,6 +151,13 @@ class RXV(object):
 
     def off(self):
         return self.on(False)
+
+    def get_playback_support(self, input_source=None):
+        if input_source is None:
+            input_source = self.input
+        if input_source not in SOURCES_SUPPORTING_PLAYBACK:
+            return PlaybackSupport.NONE
+        return SOURCES_SUPPORTING_PLAYBACK[input_source]
 
     def is_playback_supported(self, input_source=None):
         if input_source is None:

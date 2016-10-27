@@ -43,6 +43,9 @@ In most cases **rxv** module will manage to obtain locations of local compatible
   >>> rx.input = "AirPlay"
   >>> rx.is_playback_supported()
   True
+  >>> from rxv import PlaybackSupport
+  >>> (rx.get_playback_support() & PlaybackSupport.PLAY) != 0
+  True
   >>> rx.play()
   >>> rx.next()
 

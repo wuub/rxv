@@ -1,4 +1,5 @@
 import fixtures
+from io import open
 import mock
 import os
 import sys
@@ -8,6 +9,11 @@ import requests_mock
 import rxv
 
 FAKE_IP = '10.0.0.0'
+
+
+def sample_content(name):
+    with open('tests/samples/%s' % name, encoding='utf-8') as f:
+        return f.read()
 
 
 class TestRXV(testtools.TestCase):
@@ -27,7 +33,7 @@ class TestDesc(testtools.TestCase):
     @requests_mock.mock()
     def test_discover_zones(self, m):
         rec = rxv.RXV(FAKE_IP)
-        m.get(rec.unit_desc_url, body=open('tests/samples/rx-v675-desc.xml'))
+        m.get(rec.unit_desc_url, text=sample_content('rx-v675-desc.xml'))
         zones = rec.zone_controllers()
         self.assertEqual(len(zones), 2, zones)
         self.assertEqual(zones[0].zone, "Main_Zone")

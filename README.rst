@@ -1,5 +1,11 @@
-rxv
+rxv 
 ===
+.. image:: https://travis-ci.org/wuub/rxv.svg?branch=master
+    :target: https://travis-ci.org/wuub/rxv
+
+.. image:: https://landscape.io/github/wuub/rxv/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/wuub/rxv/master
+   :alt: Code Health
 
 Automation Library for Yamaha RX-V473, RX-V573, RX-V673, RX-V773 receivers
 

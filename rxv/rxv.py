@@ -272,6 +272,14 @@ class RXV(object):
         if not src_name:
             return None
 
+        # if the source does not support play_status, don't try,
+        # otherwise you can get really odd behavior.
+        #
+        # TODO: instead of a hard coded list, this should be queriable
+        # from desc.xml.
+        if src_name not in SOURCES_SUPPORTING_PLAYBACK:
+            return None
+
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, zone_cmd=False)
 

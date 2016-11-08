@@ -90,6 +90,7 @@ class RXV(object):
         self._inputs_cache = None
         self._zones_cache = None
         self._zone = zone
+        self._session = requests.Session()
 
     def __unicode__(self):
         return ('<{cls} model_name="{model}" zone="{zone}" '
@@ -115,12 +116,12 @@ class RXV(object):
 
         request_text = YamahaCommand.format(command=command, payload=payload)
         try:
-            res = requests.post(
+            res = self._session.post(
                 self.ctrl_url,
                 data=request_text,
                 headers={"Content-Type": "text/xml"}
             )
-            response = ET.XML(res.content)
+            response = ET.XML(res.content)  # releases connection to the pool
             if response.get("RC") != "0":
                 logger.error("Request %s failed with %s",
                              request_text, res.content)

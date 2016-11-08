@@ -3,6 +3,7 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+import logging
 import re
 import time
 import warnings
@@ -18,6 +19,8 @@ try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
+
+logger = logging.getLogger('rxv')
 
 # Used as an enum to indicate support for individual playback controls
 class PlaybackSupport:
@@ -111,15 +114,22 @@ class RXV(object):
             payload = request_text
 
         request_text = YamahaCommand.format(command=command, payload=payload)
-        res = requests.post(
-            self.ctrl_url,
-            data=request_text,
-            headers={"Content-Type": "text/xml"}
-        )
-        response = ET.XML(res.content)
-        if response.get("RC") != "0":
-            raise ResponseException(res.content)
-        return response
+        try:
+            res = requests.post(
+                self.ctrl_url,
+                data=request_text,
+                headers={"Content-Type": "text/xml"}
+            )
+            response = ET.XML(res.content)
+            if response.get("RC") != "0":
+                logger.error("Request %s failed with %s",
+                             request_text, res.content)
+                raise ResponseException(res.content)
+            return response
+        except ET.ParseError:
+            logger.exception("Invalid XML returned for request %s: %s",
+                             request_text, res.content)
+            raise
 
     @property
     def basic_status(self):
@@ -260,6 +270,14 @@ class RXV(object):
     def play_status(self):
         src_name = self._src_name(self.input)
         if not src_name:
+            return None
+
+        # if the source does not support play_status, don't try,
+        # otherwise you can get really odd behavior.
+        #
+        # TODO: instead of a hard coded list, this should be queriable
+        # from desc.xml.
+        if src_name not in SOURCES_SUPPORTING_PLAYBACK:
             return None
 
         request_text = PlayGet.format(src_name=src_name)

@@ -91,6 +91,20 @@ class RXV(object):
         self._zones_cache = None
         self._zone = zone
         self._session = requests.Session()
+        self._discover_features()
+
+    def _discover_features(self):
+        """Pull and parse the desc.xml so we can query it later."""
+        try:
+            desc_xml = self._session.get(self.unit_desc_url).content
+            self._desc_xml = ET.fromstring(desc_xml)
+        except ET.ParseError:
+            logger.exception("Invalid XML returned for request %s: %s",
+                             self.unit_desc_url, desc_xml)
+            raise
+        except Exception:
+            logger.exception("Failed to fetch %s" % self.unit_desc_url)
+            raise
 
     def __unicode__(self):
         return ('<{cls} model_name="{model}" zone="{zone}" '
@@ -237,7 +251,7 @@ class RXV(object):
 
     def zones(self):
         if self._zones_cache is None:
-            xml = ET.fromstring(requests.get(self.unit_desc_url).content)
+            xml = self._desc_xml
             self._zones_cache = [
                 e.get("YNC_Tag") for e in xml.findall('.//*[@Func="Subunit"]')
             ]
@@ -251,6 +265,19 @@ class RXV(object):
             zone_ctrl.zone = zone
             controllers.append(zone_ctrl)
         return controllers
+
+    def supports_method(self, source, *args):
+        # if there was a complete xpath implementation we could do
+        # this all with xpath, but without it it's lots of
+        # iteration. This is probably not worth optimizing, these
+        # loops are cheep in the long run.
+        commands = self._desc_xml.findall('.//Cmd_List')
+        for c in commands:
+            for item in c:
+                parts = item.text.split(",")
+                if parts[0] == source and parts[1:] == list(args):
+                    return True
+        return False
 
     def _src_name(self, cur_input):
         if cur_input not in self.inputs():
@@ -273,13 +300,8 @@ class RXV(object):
         if not src_name:
             return None
 
-        # if the source does not support play_status, don't try,
-        # otherwise you can get really odd behavior.
-        #
-        # TODO: instead of a hard coded list, this should be queriable
-        # from desc.xml.
-        if src_name not in SOURCES_SUPPORTING_PLAYBACK:
-            return None
+        if not self.supports_method(src_name, 'Play_Info'):
+            return
 
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, zone_cmd=False)

@@ -279,6 +279,26 @@ class RXV(object):
                     return True
         return False
 
+    def supports_play_method(self, source, method):
+        # if there was a complete xpath implementation we could do
+        # this all with xpath, but without it it's lots of
+        # iteration. This is probably not worth optimizing, these
+        # loops are cheep in the long run.
+        source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % source)
+        if source_xml is None:
+            return False
+
+        play_control = source_xml.find('.//*[@Func="Play_Control"]')
+        if play_control is None:
+            return False
+
+        # built in Element Tree does not support search by text()
+        supports = play_control.findall('.//Put_1')
+        for s in supports:
+            if s.text == method:
+                return True
+        return False
+
     def _src_name(self, cur_input):
         if cur_input not in self.inputs():
             return None

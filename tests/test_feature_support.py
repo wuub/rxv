@@ -44,3 +44,17 @@ class TestFeaturesV675(testtools.TestCase):
         self.assertTrue(rec.supports_method("Tuner", "Config"))
         self.assertFalse(
             rec.supports_method("Tuner", "Play_Control", "Playback"))
+
+    def test_supports_play_method(self):
+        rec = self.rec
+        self.assertFalse(rec.supports_play_method("NET_RADIO", "Pause"))
+        self.assertTrue(rec.supports_play_method("NET_RADIO", "Play"))
+        self.assertTrue(rec.supports_play_method("NET_RADIO", "Stop"))
+        self.assertFalse(rec.supports_play_method("NET_RADIO", "Skip Fwd"))
+        self.assertFalse(rec.supports_play_method("NET_RADIO", "Skip Rev"))
+
+        self.assertTrue(rec.supports_play_method("SERVER", "Pause"))
+        self.assertTrue(rec.supports_play_method("SERVER", "Play"))
+        self.assertTrue(rec.supports_play_method("SERVER", "Stop"))
+        self.assertTrue(rec.supports_play_method("SERVER", "Skip Fwd"))
+        self.assertTrue(rec.supports_play_method("SERVER", "Skip Rev"))

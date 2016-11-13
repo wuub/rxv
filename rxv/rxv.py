@@ -22,30 +22,23 @@ except ImportError:
 
 logger = logging.getLogger('rxv')
 
-# Used as an enum to indicate support for individual playback controls
+
 class PlaybackSupport:
-    NONE  = 0
+    """Container for Playback support.
 
-    PLAY  = (1 << 0)
-    STOP  = (1 << 1)
-    PAUSE = (1 << 2)
-    NEXT  = (1 << 3)
-    PREV  = (1 << 4)
+    This stores a set of booleans so that they are easy to turn into
+    whatever format the support needs to be specified at a higher
+    level.
 
-    BASIC = (PLAY | STOP | PAUSE)
-    NAVIGATION = (NEXT | PREV)
-    ALL   = (BASIC | NAVIGATION)
+    """
+    def __init__(self, play=False, stop=False, pause=False,
+                 skip_f=False, skip_r=False):
+        self.play = play
+        self.stop = stop
+        self.pause = pause
+        self.skip_f = skip_f
+        self.skip_r = skip_r
 
-# Add sources that support playback and what they support
-SOURCES_SUPPORTING_PLAYBACK = {
-    'SERVER': PlaybackSupport.ALL,
-    'USB': PlaybackSupport.ALL,
-    'NET RADIO': PlaybackSupport.BASIC,
-    'NAPSTER': PlaybackSupport.ALL,
-    'TUNER': PlaybackSupport.ALL,
-    'iPod (USB)': PlaybackSupport.ALL,
-    'AirPlay': PlaybackSupport.ALL
-}
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
 PlayStatus = namedtuple("PlayStatus", "playing artist album song station")
@@ -178,16 +171,30 @@ class RXV(object):
         return self.on(False)
 
     def get_playback_support(self, input_source=None):
+        """Get playback support as bit vector.
+
+        In order to expose features correctly in Home Assistant, we
+        need to make it possible to understand what play operations a
+        source supports. This builds us a Home Assistant compatible
+        bit vector from the desc.xml for the specified source.
+        """
+
         if input_source is None:
             input_source = self.input
-        if input_source not in SOURCES_SUPPORTING_PLAYBACK:
-            return PlaybackSupport.NONE
-        return SOURCES_SUPPORTING_PLAYBACK[input_source]
+        src_name = self._src_name(input_source)
+
+        return PlaybackSupport(
+            play=self.supports_play_method(src_name, 'Play'),
+            pause=self.supports_play_method(src_name, 'Pause'),
+            stop=self.supports_play_method(src_name, 'Stop'),
+            skip_f=self.supports_play_method(src_name, 'Skip Fwd'),
+            skip_r=self.supports_play_method(src_name, 'Skip Rev'))
 
     def is_playback_supported(self, input_source=None):
         if input_source is None:
             input_source = self.input
-        return input_source in SOURCES_SUPPORTING_PLAYBACK
+        support = self.get_playback_support(input_source)
+        return support.play
 
     def play(self):
         self._playback_control('Play')

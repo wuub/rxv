@@ -9,6 +9,7 @@ import requests_mock
 import rxv
 
 FAKE_IP = '10.0.0.0'
+DESC_XML = 'http://%s/YamahaRemoteControl/desc.xml' % FAKE_IP
 
 
 def sample_content(name):
@@ -18,7 +19,9 @@ def sample_content(name):
 
 class TestRXV(testtools.TestCase):
 
-    def test_basic_object(self):
+    @requests_mock.mock()
+    def test_basic_object(self, m):
+        m.get(DESC_XML, text=sample_content('rx-v675-desc.xml'))
         rec = rxv.RXV(FAKE_IP)
         self.assertEqual(
             rec.ctrl_url,
@@ -32,8 +35,8 @@ class TestDesc(testtools.TestCase):
 
     @requests_mock.mock()
     def test_discover_zones(self, m):
+        m.get(DESC_XML, text=sample_content('rx-v675-desc.xml'))
         rec = rxv.RXV(FAKE_IP)
-        m.get(rec.unit_desc_url, text=sample_content('rx-v675-desc.xml'))
         zones = rec.zone_controllers()
         self.assertEqual(len(zones), 2, zones)
         self.assertEqual(zones[0].zone, "Main_Zone")

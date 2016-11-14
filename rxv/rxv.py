@@ -22,30 +22,23 @@ except ImportError:
 
 logger = logging.getLogger('rxv')
 
-# Used as an enum to indicate support for individual playback controls
+
 class PlaybackSupport:
-    NONE  = 0
+    """Container for Playback support.
 
-    PLAY  = (1 << 0)
-    STOP  = (1 << 1)
-    PAUSE = (1 << 2)
-    NEXT  = (1 << 3)
-    PREV  = (1 << 4)
+    This stores a set of booleans so that they are easy to turn into
+    whatever format the support needs to be specified at a higher
+    level.
 
-    BASIC = (PLAY | STOP | PAUSE)
-    NAVIGATION = (NEXT | PREV)
-    ALL   = (BASIC | NAVIGATION)
+    """
+    def __init__(self, play=False, stop=False, pause=False,
+                 skip_f=False, skip_r=False):
+        self.play = play
+        self.stop = stop
+        self.pause = pause
+        self.skip_f = skip_f
+        self.skip_r = skip_r
 
-# Add sources that support playback and what they support
-SOURCES_SUPPORTING_PLAYBACK = {
-    'SERVER': PlaybackSupport.ALL,
-    'USB': PlaybackSupport.ALL,
-    'NET RADIO': PlaybackSupport.BASIC,
-    'NAPSTER': PlaybackSupport.ALL,
-    'TUNER': PlaybackSupport.ALL,
-    'iPod (USB)': PlaybackSupport.ALL,
-    'AirPlay': PlaybackSupport.ALL
-}
 
 BasicStatus = namedtuple("BasicStatus", "on volume mute input")
 PlayStatus = namedtuple("PlayStatus", "playing artist album song station")
@@ -91,6 +84,20 @@ class RXV(object):
         self._zones_cache = None
         self._zone = zone
         self._session = requests.Session()
+        self._discover_features()
+
+    def _discover_features(self):
+        """Pull and parse the desc.xml so we can query it later."""
+        try:
+            desc_xml = self._session.get(self.unit_desc_url).content
+            self._desc_xml = ET.fromstring(desc_xml)
+        except ET.ParseError:
+            logger.exception("Invalid XML returned for request %s: %s",
+                             self.unit_desc_url, desc_xml)
+            raise
+        except Exception:
+            logger.exception("Failed to fetch %s" % self.unit_desc_url)
+            raise
 
     def __unicode__(self):
         return ('<{cls} model_name="{model}" zone="{zone}" '
@@ -164,16 +171,30 @@ class RXV(object):
         return self.on(False)
 
     def get_playback_support(self, input_source=None):
+        """Get playback support as bit vector.
+
+        In order to expose features correctly in Home Assistant, we
+        need to make it possible to understand what play operations a
+        source supports. This builds us a Home Assistant compatible
+        bit vector from the desc.xml for the specified source.
+        """
+
         if input_source is None:
             input_source = self.input
-        if input_source not in SOURCES_SUPPORTING_PLAYBACK:
-            return PlaybackSupport.NONE
-        return SOURCES_SUPPORTING_PLAYBACK[input_source]
+        src_name = self._src_name(input_source)
+
+        return PlaybackSupport(
+            play=self.supports_play_method(src_name, 'Play'),
+            pause=self.supports_play_method(src_name, 'Pause'),
+            stop=self.supports_play_method(src_name, 'Stop'),
+            skip_f=self.supports_play_method(src_name, 'Skip Fwd'),
+            skip_r=self.supports_play_method(src_name, 'Skip Rev'))
 
     def is_playback_supported(self, input_source=None):
         if input_source is None:
             input_source = self.input
-        return input_source in SOURCES_SUPPORTING_PLAYBACK
+        support = self.get_playback_support(input_source)
+        return support.play
 
     def play(self):
         self._playback_control('Play')
@@ -237,7 +258,7 @@ class RXV(object):
 
     def zones(self):
         if self._zones_cache is None:
-            xml = ET.fromstring(requests.get(self.unit_desc_url).content)
+            xml = self._desc_xml
             self._zones_cache = [
                 e.get("YNC_Tag") for e in xml.findall('.//*[@Func="Subunit"]')
             ]
@@ -251,6 +272,39 @@ class RXV(object):
             zone_ctrl.zone = zone
             controllers.append(zone_ctrl)
         return controllers
+
+    def supports_method(self, source, *args):
+        # if there was a complete xpath implementation we could do
+        # this all with xpath, but without it it's lots of
+        # iteration. This is probably not worth optimizing, these
+        # loops are cheep in the long run.
+        commands = self._desc_xml.findall('.//Cmd_List')
+        for c in commands:
+            for item in c:
+                parts = item.text.split(",")
+                if parts[0] == source and parts[1:] == list(args):
+                    return True
+        return False
+
+    def supports_play_method(self, source, method):
+        # if there was a complete xpath implementation we could do
+        # this all with xpath, but without it it's lots of
+        # iteration. This is probably not worth optimizing, these
+        # loops are cheep in the long run.
+        source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % source)
+        if source_xml is None:
+            return False
+
+        play_control = source_xml.find('.//*[@Func="Play_Control"]')
+        if play_control is None:
+            return False
+
+        # built in Element Tree does not support search by text()
+        supports = play_control.findall('.//Put_1')
+        for s in supports:
+            if s.text == method:
+                return True
+        return False
 
     def _src_name(self, cur_input):
         if cur_input not in self.inputs():
@@ -273,13 +327,8 @@ class RXV(object):
         if not src_name:
             return None
 
-        # if the source does not support play_status, don't try,
-        # otherwise you can get really odd behavior.
-        #
-        # TODO: instead of a hard coded list, this should be queriable
-        # from desc.xml.
-        if src_name not in SOURCES_SUPPORTING_PLAYBACK:
-            return None
+        if not self.supports_method(src_name, 'Play_Info'):
+            return
 
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, zone_cmd=False)

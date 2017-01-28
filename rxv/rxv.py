@@ -65,7 +65,10 @@ VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
 SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
-
+AvailableScenes = '<Config>GetParam</Config>'
+Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
+AvailableSurroundPrograms = '<Surround><Sound_Program_Param>GetParam</Sound_Program_Param></Surround>'
+SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
 
 class RXV(object):
 
@@ -246,6 +249,72 @@ class RXV(object):
                                           (elt.text
                                            for elt in res.iter("Src_Name"))))
         return self._inputs_cache
+
+    @property
+    def surroundProgram(self):
+        request_text = Surround.format(input_name=GetParam)
+        response = self._request('GET', request_text)
+        #TODO
+        return response.find("%s/Input/Input_Sel" % self.zone).text
+
+    @surroundProgram.setter
+    def surroundProgram(self, surround_name):
+        assert surround_name in self.surrounds()
+        parameter = "<Sound_Program>{parameter}</Sound_Program>".format(parameter=surround_name)
+        request_text = SurroundPrograms.format(parameter=parameter)
+        self._request('PUT', request_text)
+
+    def surroundPrograms(self):
+        if not self._surround_programs_cache:
+            res = self._request('GET', AvailableSurroundPrograms)
+            #TODO
+            self._surround_programs_cache = dict(zip((elt.text
+                                           for elt in res.iter('Param')),
+                                          (elt.text
+                                           for elt in res.iter("Src_Name")))
+            #OR just parse it from desc.xml:
+            # if there was a complete xpath implementation we could do
+            # this all with xpath, but without it it's lots of
+            # iteration. This is probably not worth optimizing, these
+            # loops are cheep in the long run.
+            source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % source)
+            if source_xml is None:
+                return False
+
+            play_control = source_xml.find('.//*[@Func="Play_Control"]')
+            if play_control is None:
+                return False
+
+            # built in Element Tree does not support search by text()
+            supports = play_control.findall('.//Put_1')
+            for s in supports:
+                if s.text == method:
+                    return True
+            return False
+        return self._surround_programs_cache
+
+    @property
+    def scene(self):
+        request_text = Scene.format(parameter=GetParam)
+        response = self._request('GET', request_text)
+        #TODO
+        return response.find("%s/Input/Input_Sel" % self.zone).text
+
+    @scene.setter
+    def scene(self, scene_name):
+        assert scene_name in self.scenes()
+        request_text = Input.format(parameter=scene_name)
+        self._request('PUT', request_text)
+
+    def scenes(self):
+        if not self._scenes_cache:
+            res = self._request('GET', AvailableScenes)
+            #TODO:
+            self._scenes_cache = dict(zip((elt.text
+                                           for elt in res.iter('Param')),
+                                          (elt.text
+                                           for elt in res.iter("Src_Name"))))
+        return self._scenes_cache
 
     @property
     def zone(self):

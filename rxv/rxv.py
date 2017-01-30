@@ -67,7 +67,6 @@ SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
 AvailableScenes = '<Config>GetParam</Config>'
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
-AvailableSurroundPrograms = '<Surround><Sound_Program_Param>GetParam</Sound_Program_Param></Surround>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
 
 class RXV(object):
@@ -86,6 +85,8 @@ class RXV(object):
         self._inputs_cache = None
         self._zones_cache = None
         self._zone = zone
+        self._surround_programs_cache = None
+        self._scenes_cache = None
         self._session = requests.Session()
         self._discover_features()
 
@@ -252,53 +253,47 @@ class RXV(object):
 
     @property
     def surroundProgram(self):
-        request_text = Surround.format(input_name=GetParam)
+        request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)
-        #TODO
-        return response.find("%s/Input/Input_Sel" % self.zone).text
+        return response.find("%s/Surround/Program_Sel/Current/Sound_Program" % self.zone).text
 
     @surroundProgram.setter
     def surroundProgram(self, surround_name):
-        assert surround_name in self.surrounds()
+        assert surround_name in self.surroundPrograms()
         parameter = "<Sound_Program>{parameter}</Sound_Program>".format(parameter=surround_name)
-        request_text = SurroundPrograms.format(parameter=parameter)
+        request_text = SurroundProgram.format(parameter=parameter)
         self._request('PUT', request_text)
 
     def surroundPrograms(self):
         if not self._surround_programs_cache:
-            res = self._request('GET', AvailableSurroundPrograms)
-            #TODO
-            self._surround_programs_cache = dict(zip((elt.text
-                                           for elt in res.iter('Param')),
-                                          (elt.text
-                                           for elt in res.iter("Src_Name")))
-            #OR just parse it from desc.xml:
             # if there was a complete xpath implementation we could do
             # this all with xpath, but without it it's lots of
             # iteration. This is probably not worth optimizing, these
             # loops are cheep in the long run.
-            source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % source)
+            source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % self._zone)
             if source_xml is None:
                 return False
 
-            play_control = source_xml.find('.//*[@Func="Play_Control"]')
-            if play_control is None:
+            setup = source_xml.find('.//*[@Title_1="Setup"]')
+            if setup is None:
+                return False
+
+            puts = setup.find('.//Put_2/Param_1')
+            if puts is None:
                 return False
 
             # built in Element Tree does not support search by text()
-            supports = play_control.findall('.//Put_1')
+            supports = puts.findall('.//Direct')
+            self._surround_programs_cache = list()
             for s in supports:
-                if s.text == method:
-                    return True
-            return False
+                self._surround_programs_cache.append(s.text)
         return self._surround_programs_cache
 
     @property
     def scene(self):
         request_text = Scene.format(parameter=GetParam)
         response = self._request('GET', request_text)
-        #TODO
-        return response.find("%s/Input/Input_Sel" % self.zone).text
+        return response.find("%s/Scene/Scene_Sel" % self.zone).text
 
     @scene.setter
     def scene(self, scene_name):
@@ -309,11 +304,15 @@ class RXV(object):
     def scenes(self):
         if not self._scenes_cache:
             res = self._request('GET', AvailableScenes)
-            #TODO:
-            self._scenes_cache = dict(zip((elt.text
-                                           for elt in res.iter('Param')),
-                                          (elt.text
-                                           for elt in res.iter("Src_Name"))))
+            scenes = res.find('.//Scene')
+            if scenes is None:
+                return False
+
+            # built in Element Tree does not support search by text()
+            supports = scenes.findall('.//*')
+            self._scenes_cache = list()
+            for s in supports:
+                self._scenes_cache.append(s.text)
         return self._scenes_cache
 
     @property

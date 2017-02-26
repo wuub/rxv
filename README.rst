@@ -54,6 +54,12 @@ In most cases **rxv** module will manage to obtain locations of local compatible
   True
   >>> rx.play()
   >>> rx.next()
+  >>> rx.outputs
+  {'hdmi2': 'off', 'hdmi1': 'on'}
+  >>> rx.enable_output('hdmi2', True)
+  >>> rx.enable_output('hdmi1', False)
+  >>> rx.outputs
+  {'hdmi2': 'on', 'hdmi1': 'off'}
 
 
 If SSDP causes you some problems, `ctrl_url` can be provided by hand.::

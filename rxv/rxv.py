@@ -252,24 +252,20 @@ class RXV(object):
         return self._inputs_cache
 
     @property
-    def surroundProgram(self):
+    def surround_program(self):
         request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)
         return response.find("%s/Surround/Program_Sel/Current/Sound_Program" % self.zone).text
 
-    @surroundProgram.setter
-    def surroundProgram(self, surround_name):
-        assert surround_name in self.surroundPrograms()
+    @surround_program.setter
+    def surround_program(self, surround_name):
+        assert surround_name in self.surround_programs()
         parameter = "<Sound_Program>{parameter}</Sound_Program>".format(parameter=surround_name)
         request_text = SurroundProgram.format(parameter=parameter)
         self._request('PUT', request_text)
 
-    def surroundPrograms(self):
+    def surround_programs(self):
         if not self._surround_programs_cache:
-            # if there was a complete xpath implementation we could do
-            # this all with xpath, but without it it's lots of
-            # iteration. This is probably not worth optimizing, these
-            # loops are cheep in the long run.
             source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % self._zone)
             if source_xml is None:
                 return False
@@ -282,7 +278,6 @@ class RXV(object):
             if puts is None:
                 return False
 
-            # built in Element Tree does not support search by text()
             supports = puts.findall('.//Direct')
             self._surround_programs_cache = list()
             for s in supports:
@@ -308,7 +303,6 @@ class RXV(object):
             if scenes is None:
                 return False
 
-            # built in Element Tree does not support search by text()
             supports = scenes.findall('.//*')
             self._scenes_cache = list()
             for s in supports:

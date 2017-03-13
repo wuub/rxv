@@ -65,9 +65,10 @@ VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
 SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
-AvailableScenes = '<Config>GetParam</Config>'
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
+SceneSelItem = '<Scene><Scene_Sel_Item>{parameter}</Scene_Sel_Item></Scene>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
+
 
 class RXV(object):
 
@@ -292,21 +293,19 @@ class RXV(object):
 
     @scene.setter
     def scene(self, scene_name):
+        if scene_name in self.scenes().values():
+            scene_name = next(k for k, v in self.scenes().items() if v == scene_name)
         assert scene_name in self.scenes()
-        request_text = Input.format(parameter=scene_name)
+        request_text = Scene.format(parameter=scene_name)
         self._request('PUT', request_text)
 
     def scenes(self):
         if not self._scenes_cache:
-            res = self._request('GET', AvailableScenes)
-            scenes = res.find('.//Scene')
-            if scenes is None:
-                return False
-
-            supports = scenes.findall('.//*')
-            self._scenes_cache = list()
-            for s in supports:
-                self._scenes_cache.append(s.text)
+            request_text = SceneSelItem.format(parameter=GetParam)
+            res = self._request('GET', request_text)
+            raw_scenes = dict(zip((elt.text for elt in res.iter("Param")),
+                                  (elt.text for elt in res.iter("Title"))))
+            self._scenes_cache = {k: v for k, v in raw_scenes.items() if k.startswith("Scene ")}
         return self._scenes_cache
 
     @property

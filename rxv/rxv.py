@@ -68,7 +68,8 @@ SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
 SceneSelItem = '<Scene><Scene_Sel_Item>{parameter}</Scene_Sel_Item></Scene>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
-
+SurroundProgramSet = '<Surround><Program_Sel><Current><Sound_Program>{parameter}</Sound_Program>'\
+                     '</Current></Program_Sel></Surround>'
 
 class RXV(object):
 
@@ -261,29 +262,13 @@ class RXV(object):
     @surround_program.setter
     def surround_program(self, surround_name):
         assert surround_name in self.surround_programs()
-        parameter = "<Sound_Program>{parameter}</Sound_Program>".format(parameter=surround_name)
-        request_text = SurroundProgram.format(parameter=parameter)
+        request_text = SurroundProgramSet.format(parameter=surround_name)
         self._request('PUT', request_text)
 
     def surround_programs(self):
-        if not self._surround_programs_cache:
-            source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % self._zone)
-            if source_xml is None:
-                return False
-
-            setup = source_xml.find('.//*[@Title_1="Setup"]')
-            if setup is None:
-                return False
-
-            puts = setup.find('.//Put_2/Param_1')
-            if puts is None:
-                return False
-
-            supports = puts.findall('.//Direct')
-            self._surround_programs_cache = list()
-            for s in supports:
-                self._surround_programs_cache.append(s.text)
-        return self._surround_programs_cache
+        zone_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % self._zone)
+        programs = zone_xml.findall('.//*[@Func_Ex="Surround"]/*/Put_2/Param_1/Direct')
+        return [e.text for e in programs]
 
     @property
     def scene(self):

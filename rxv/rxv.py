@@ -65,7 +65,9 @@ VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
 SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
-
+AvailableScenes = '<Config>GetParam</Config>'
+Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
+SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
 
 class RXV(object):
 
@@ -83,6 +85,8 @@ class RXV(object):
         self._inputs_cache = None
         self._zones_cache = None
         self._zone = zone
+        self._surround_programs_cache = None
+        self._scenes_cache = None
         self._session = requests.Session()
         self._discover_features()
 
@@ -246,6 +250,64 @@ class RXV(object):
                                           (elt.text
                                            for elt in res.iter("Src_Name"))))
         return self._inputs_cache
+
+    @property
+    def surround_program(self):
+        request_text = SurroundProgram.format(parameter=GetParam)
+        response = self._request('GET', request_text)
+        return response.find("%s/Surround/Program_Sel/Current/Sound_Program" % self.zone).text
+
+    @surround_program.setter
+    def surround_program(self, surround_name):
+        assert surround_name in self.surround_programs()
+        parameter = "<Sound_Program>{parameter}</Sound_Program>".format(parameter=surround_name)
+        request_text = SurroundProgram.format(parameter=parameter)
+        self._request('PUT', request_text)
+
+    def surround_programs(self):
+        if not self._surround_programs_cache:
+            source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % self._zone)
+            if source_xml is None:
+                return False
+
+            setup = source_xml.find('.//*[@Title_1="Setup"]')
+            if setup is None:
+                return False
+
+            puts = setup.find('.//Put_2/Param_1')
+            if puts is None:
+                return False
+
+            supports = puts.findall('.//Direct')
+            self._surround_programs_cache = list()
+            for s in supports:
+                self._surround_programs_cache.append(s.text)
+        return self._surround_programs_cache
+
+    @property
+    def scene(self):
+        request_text = Scene.format(parameter=GetParam)
+        response = self._request('GET', request_text)
+        return response.find("%s/Scene/Scene_Sel" % self.zone).text
+
+    @scene.setter
+    def scene(self, scene_name):
+        assert scene_name in self.scenes()
+        request_text = Input.format(parameter=scene_name)
+        self._request('PUT', request_text)
+
+    def scenes(self):
+        if not self._scenes_cache:
+            res = self._request('GET', AvailableScenes)
+            scenes = res.find('.//Scene')
+            if scenes is None:
+                return False
+
+            supports = scenes.findall('.//*')
+            self._scenes_cache = list()
+            for s in supports:
+                self._scenes_cache.append(s.text)
+        return self._scenes_cache
 
     @property
     def zone(self):

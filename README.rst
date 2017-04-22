@@ -89,6 +89,7 @@ Contributors
 * `@Raynes <https://github.com/Raynes>`_
 * `@sdague <https://github.com/sdague>`_
 * `@postlund <https://github.com/postlund>`_
+* `@HerrHofrat <https://github.com/HerrHofrat>`_
 
 Users
 =====

@@ -290,6 +290,7 @@ class RXV(object):
             if cmd.text.startswith(cmd_name):
                 yield cmd.text
 
+    @property
     def surround_program(self):
         request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)

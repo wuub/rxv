@@ -13,7 +13,7 @@ from math import floor
 
 import requests
 
-from .exceptions import MenuUnavailable, PlaybackUnavailable, ResponseException
+from .exceptions import MenuUnavailable, PlaybackUnavailable, ResponseException, UnknownPort
 
 try:
     from urllib.parse import urlparse
@@ -65,9 +65,13 @@ VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
 SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
+
+HdmiOut = '<System><Sound_Video><HDMI><Output><OUT_{port}>{command}</OUT_{port}>'\
+          '</Output></HDMI></Sound_Video></System>'
 AvailableScenes = '<Config>GetParam</Config>'
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
+
 
 class RXV(object):
 
@@ -252,6 +256,40 @@ class RXV(object):
         return self._inputs_cache
 
     @property
+    def outputs(self):
+        outputs = {}
+
+        for cmd in self._find_commands('System,Sound_Video,HDMI,Output'):
+            # An output typically looks like this:
+            #   System,Sound_Video,HDMI,Output,OUT_1
+            # Extract the index number at the end as it is needed when
+            # requesting its current state.
+            m = re.match(r'.*_(\d+)$', cmd)
+            if m is None:
+                continue
+
+            port_number = m.group(1)
+            request = HdmiOut.format(port=port_number, command='GetParam')
+            response = self._request('GET', request, zone_cmd=False)
+            port_state = response.find(cmd.replace(',', '/')).text.lower()
+            outputs['hdmi' + str(port_number)] = port_state
+
+        return outputs
+
+    def enable_output(self, port, enabled):
+        m = re.match(r'hdmi(\d+)', port.lower())
+        if m is None:
+            raise UnknownPort(port)
+
+        request = HdmiOut.format(port=m.group(1),
+                                 command='On' if enabled else 'Off')
+        self._request('PUT', request, zone_cmd=False)
+
+    def _find_commands(self, cmd_name):
+        for cmd in self._desc_xml.findall('.//Cmd_List/Define'):
+            if cmd.text.startswith(cmd_name):
+                yield cmd.text
+
     def surround_program(self):
         request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)

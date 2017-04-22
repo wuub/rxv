@@ -23,3 +23,9 @@ class PlaybackUnavailable(RXVException):
     """Raised when playback function called on unsupported source."""
     def __init__(self, source, action):
         super().__init__('{} does not support {}'.format(source, action))
+
+
+class UnknownPort(RXVException):
+    """Raised when an unknown port is found."""
+    def __init__(self, port):
+        super().__init__('port {} is not supported'.format(port))

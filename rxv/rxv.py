@@ -98,6 +98,9 @@ class RXV(object):
         """Pull and parse the desc.xml so we can query it later."""
         try:
             desc_xml = self._session.get(self.unit_desc_url).content
+            if not desc_xml:
+                logger.error("Unsupported Yamaha device? Failed to fetch %s" % self.unit_desc_url)
+                return
             self._desc_xml = ET.fromstring(desc_xml)
         except ET.ParseError:
             logger.exception("Invalid XML returned for request %s: %s",

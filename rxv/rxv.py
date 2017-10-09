@@ -521,7 +521,17 @@ class RXV(object):
 
     @volume.setter
     def volume(self, value):
-        value = str(int(value * 10))
+        """Convert volume for setting.
+
+        We're passing around volume in standard db units, like -52.0
+        db. The API takes int values. However, the API also only takes
+        int values that corespond to half db steps (so -52.0 and -51.5
+        are valid, -51.8 is not).
+
+        Through the power of math doing the int of * 2, then * 5 will
+        ensure we only get half steps.
+        """
+        value = str(int(value * 2) * 5)
         exp = 1
         unit = 'dB'
 

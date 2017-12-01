@@ -331,8 +331,9 @@ class RXV(object):
 
     @scene.setter
     def scene(self, scene_name):
-        assert scene_name in self.scenes()
-        request_text = Input.format(parameter=scene_name)
+        assert scene_name in self._scenes_cache
+        scene_number = self._scenes_cache.get(scene_name)
+        request_text = Scene.format(parameter=scene_number)
         self._request('PUT', request_text)
 
     def scenes(self):
@@ -342,10 +343,9 @@ class RXV(object):
             if scenes is None:
                 return False
 
-            supports = scenes.findall('.//*')
-            self._scenes_cache = list()
-            for s in supports:
-                self._scenes_cache.append(s.text)
+            self._scenes_cache = {}
+            for scene in scenes:
+                self._scenes_cache[scene.text] = scene.tag.replace("_", " ")
         return self._scenes_cache
 
     @property

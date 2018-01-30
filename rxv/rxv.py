@@ -63,6 +63,7 @@ ListControlCursor = '<{src_name}><List_Control><Cursor>{action}</Cursor>'\
 VolumeLevel = '<Volume><Lvl>{value}</Lvl></Volume>'
 VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
+SoundVideo = '<Sound_Video>{value}</Sound_Video>'
 SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
 
@@ -563,6 +564,64 @@ class RXV(object):
         request_text = VolumeMute.format(state=new_state)
         response = self._request('PUT', request_text)
         return response
+
+    @property
+    def adaptive_drc(self):
+        """
+        View the current Adaptive Dynamic Range Compression setting, a means
+        of equalizing various input levels at low volume. This feature is ideal
+        for watching late at night (to avoid extremes of volume between
+        dialogue scenes and explosions etc.) or in noisy environments. It is
+        best disabled for the full dynamic range audio experience.
+
+        :return: True if Dynamic Range Compression is enabled.
+        """
+        get_tag = '<Adaptive_DRC>GetParam</Adaptive_DRC>'
+        request_text = SoundVideo.format(value=get_tag)
+        response = self._request('GET', request_text)
+        drc = response.find('%s/Sound_Video/Adaptive_DRC' % self.zone).text
+        return False if drc == 'Off' else True
+
+    @adaptive_drc.setter
+    def adaptive_drc(self, value=False):
+        """
+        :param value: True to enable dynamic range compression. Default False.
+        """
+        set_value = 'Auto' if value else 'Off'
+        set_tag = '<Adaptive_DRC>{}</Adaptive_DRC>'.format(set_value)
+        request_text = SoundVideo.format(value=set_tag)
+        self._request('PUT', request_text)
+
+    @property
+    def dialogue_level(self):
+        """
+        An adjustment to elevate the volume of dialogue sounds; useful if the
+        volume of dialogue is difficult to make out against background sounds
+        or music.
+
+        :return: An integer between 0 (no adjustment) to 3 (most increased).
+        """
+        get_tag = '<Dialogue_Adjust><Dialogue_Lvl>GetParam' \
+                  '</Dialogue_Lvl></Dialogue_Adjust>'
+        request_text = SoundVideo.format(value=get_tag)
+        response = self._request('GET', request_text)
+        level = response.find('%s/Sound_Video/Dialogue_Adjust/Dialogue_Lvl'
+                              % self.zone).text
+        return int(level)
+
+    @dialogue_level.setter
+    def dialogue_level(self, value=0):
+        """
+        :param value: An integer between 0 and 3 to determine how much to
+            increase dialogue sounds over other sounds. A value of zero
+            disables this feature.
+        """
+        if int(value) not in [0, 1, 2, 3]:
+            raise ValueError("Value must be 0, 1, 2, or 3")
+        set_tag = '<Dialogue_Adjust><Dialogue_Lvl>{}' \
+                  '</Dialogue_Lvl></Dialogue_Adjust>'.format(int(value))
+        request_text = SoundVideo.format(value=set_tag)
+        self._request('PUT', request_text)
 
     def _direct_sel(self, lineno):
         request_text = SelectNetRadioLine.format(lineno=lineno)

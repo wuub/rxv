@@ -334,7 +334,7 @@ class RXV(object):
 
     @scene.setter
     def scene(self, scene_name):
-        assert scene_name in self._scenes_cache
+        assert scene_name in self.scenes()
         scene_number = self._scenes_cache.get(scene_name)
         request_text = Scene.format(parameter=scene_number)
         self._request('PUT', request_text)

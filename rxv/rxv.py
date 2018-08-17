@@ -444,7 +444,9 @@ class RXV(object):
             for name in names:
                 tag = doc.find(".//%s" % name)
                 if tag is not None and tag.text is not None:
-                    return html.unescape(tag.text).strip() or ""
+                    # Tuner and Net Radio sometimes respond 
+                    # with escaped entities
+                    return html.unescape(tag.text).strip()
             return ""
 
         playing = safe_get(res, ["Playback_Info"]) == "Play" \

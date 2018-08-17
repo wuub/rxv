@@ -133,7 +133,6 @@ class RXV(object):
             payload = request_text
 
         request_text = YamahaCommand.format(command=command, payload=payload)
-        print(request_text)
         try:
             res = self._session.post(
                 self.ctrl_url,

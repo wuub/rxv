@@ -133,6 +133,7 @@ class RXV(object):
             payload = request_text
 
         request_text = YamahaCommand.format(command=command, payload=payload)
+        print(request_text)
         try:
             res = self._session.post(
                 self.ctrl_url,
@@ -426,6 +427,24 @@ class RXV(object):
         avail = next(config.iter('Feature_Availability'))
         return avail.text == 'Ready'
 
+    @staticmethod
+    def safe_get(doc, names):
+        try:
+            # python 3.x
+            import html
+        except ImportError:
+            # python 2.7
+            import HTMLParser
+            html = HTMLParser.HTMLParser()
+
+        for name in names:
+            tag = doc.find(".//%s" % name)
+            if tag is not None and tag.text is not None:
+                # Tuner and Net Radio sometimes respond
+                # with escaped entities
+                return html.unescape(tag.text).strip()
+        return ""
+
     def play_status(self):
 
         src_name = self._src_name(self.input)
@@ -439,22 +458,12 @@ class RXV(object):
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, zone_cmd=False)
 
-        def safe_get(doc, names):
-            import html
-            for name in names:
-                tag = doc.find(".//%s" % name)
-                if tag is not None and tag.text is not None:
-                    # Tuner and Net Radio sometimes respond 
-                    # with escaped entities
-                    return html.unescape(tag.text).strip()
-            return ""
-
-        playing = safe_get(res, ["Playback_Info"]) == "Play" \
+        playing = RXV.safe_get(res, ["Playback_Info"]) == "Play" \
                   or src_name == "Tuner"
-        artist = safe_get(res, ["Artist", "Program_Type"])
-        album = safe_get(res, ["Album", "Radio_Text_A"])
-        song = safe_get(res, ["Song", "Radio_Text_B"])
-        station = safe_get(res, ["Station", "Program_Service"])
+        artist = RXV.safe_get(res, ["Artist", "Program_Type"])
+        album = RXV.safe_get(res, ["Album", "Radio_Text_A"])
+        song = RXV.safe_get(res, ["Song", "Track", "Radio_Text_B"])
+        station = RXV.safe_get(res, ["Station", "Program_Service"])
 
         status = PlayStatus(playing, artist, album, song, station)
         return status

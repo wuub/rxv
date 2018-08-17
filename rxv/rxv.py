@@ -427,7 +427,9 @@ class RXV(object):
         return avail.text == 'Ready'
 
     def play_status(self):
+
         src_name = self._src_name(self.input)
+
         if not src_name:
             return None
 
@@ -437,19 +439,20 @@ class RXV(object):
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, zone_cmd=False)
 
-        playing = (res.find(".//Playback_Info").text == "Play")
+        def safe_get(doc, names):
+            import html
+            for name in names:
+                tag = doc.find(".//%s" % name)
+                if tag is not None and tag.text is not None:
+                    return html.unescape(tag.text).strip() or ""
+            return ""
 
-        def safe_get(doc, name):
-            tag = doc.find(".//%s" % name)
-            if tag is not None:
-                return tag.text or ""
-            else:
-                return ""
-
-        artist = safe_get(res, "Artist")
-        album = safe_get(res, "Album")
-        song = safe_get(res, "Song")
-        station = safe_get(res, "Station")
+        playing = safe_get(res, ["Playback_Info"]) == "Play" \
+                  or src_name == "Tuner"
+        artist = safe_get(res, ["Artist", "Program_Type"])
+        album = safe_get(res, ["Album", "Radio_Text_A"])
+        song = safe_get(res, ["Song", "Radio_Text_B"])
+        station = safe_get(res, ["Station", "Program_Service"])
 
         status = PlayStatus(playing, artist, album, song, station)
         return status

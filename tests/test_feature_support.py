@@ -58,7 +58,7 @@ class TestFeaturesV675(testtools.TestCase):
         self.assertTrue(rec.supports_play_method("SERVER", "Skip Rev"))
 
     def test_play_status_spotify(self):
-        import xml.etree.ElementTree as ET
+        from defusedxml import cElementTree as ET
         res = ET.XML(sample_content('rx-v1030-spotify-response.xml'))
         self.assertTrue(
             rxv.RXV.safe_get(res, ["Playback_Info"]) == "Play"
@@ -81,7 +81,7 @@ class TestFeaturesV675(testtools.TestCase):
         )
 
     def test_play_status_netradio(self):
-        import xml.etree.ElementTree as ET
+        from defusedxml import cElementTree as ET
         res = ET.XML(sample_content('rx-v1030-netradio-response.xml'))
         self.assertTrue(
             rxv.RXV.safe_get(res, ["Playback_Info"]) == "Play"
@@ -104,7 +104,7 @@ class TestFeaturesV675(testtools.TestCase):
         )
 
     def test_play_status_tuner(self):
-        import xml.etree.ElementTree as ET
+        from defusedxml import cElementTree as ET
         res = ET.XML(sample_content('rx-v1030-tuner-response.xml'))
         src_name = "Tuner"
         self.assertTrue(

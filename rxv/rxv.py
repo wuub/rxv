@@ -7,7 +7,7 @@ import logging
 import re
 import time
 import warnings
-import xml.etree.ElementTree as ET
+from defusedxml import cElementTree as ET
 from collections import namedtuple
 from math import floor
 

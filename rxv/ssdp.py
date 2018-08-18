@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 
 import re
 import socket
-import xml.etree.ElementTree as ET
+from defusedxml import cElementTree as ET
 from collections import namedtuple
 
 import requests

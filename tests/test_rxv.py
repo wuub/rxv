@@ -1,13 +1,8 @@
-import xml
-
-import fixtures
 from io import open
-import mock
-import os
-import sys
-import testtools
 
 import requests_mock
+import testtools
+
 import rxv
 
 FAKE_IP = '10.0.0.0'

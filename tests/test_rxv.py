@@ -1,3 +1,5 @@
+import xml
+
 import fixtures
 from io import open
 import mock

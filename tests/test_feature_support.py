@@ -65,19 +65,19 @@ class TestFeaturesV675(testtools.TestCase):
         )
         self.assertEqual(
             'Lenny Kravitz',
-            rxv.RXV.safe_get(res, ["Artist", "Program_Type"])
+            rxv.RXV.safe_get(res, rxv.rxv.ARTIST_OPTIONS)
         )
         self.assertEqual(
             'It\'s Enough',
-            rxv.RXV.safe_get(res, ["Album", "Radio_Text_A"])
+            rxv.RXV.safe_get(res, rxv.rxv.ALBUM_OPTIONS)
         )
         self.assertEqual(
             'It\'s Enough',
-            rxv.RXV.safe_get(res, ["Song", "Track", "Radio_Text_B"])
+            rxv.RXV.safe_get(res, rxv.rxv.SONG_OPTIONS)
         )
         self.assertEqual(
             '',
-            rxv.RXV.safe_get(res, ["Station", "Program_Service"])
+            rxv.RXV.safe_get(res, rxv.rxv.STATION_OPTIONS)
         )
 
     def test_play_status_netradio(self):
@@ -88,19 +88,19 @@ class TestFeaturesV675(testtools.TestCase):
         )
         self.assertEqual(
             '',
-            rxv.RXV.safe_get(res, ["Artist", "Program_Type"])
+            rxv.RXV.safe_get(res, rxv.rxv.ARTIST_OPTIONS)
         )
         self.assertEqual(
             'Undertow',
-            rxv.RXV.safe_get(res, ["Album", "Radio_Text_A"])
+            rxv.RXV.safe_get(res, rxv.rxv.ALBUM_OPTIONS)
         )
         self.assertEqual(
             'Sober',
-            rxv.RXV.safe_get(res, ["Song", "Track", "Radio_Text_B"])
+            rxv.RXV.safe_get(res, rxv.rxv.SONG_OPTIONS)
         )
         self.assertEqual(
             'NDR 2 (HH)',
-            rxv.RXV.safe_get(res, ["Station", "Program_Service"])
+            rxv.RXV.safe_get(res, rxv.rxv.STATION_OPTIONS)
         )
 
     def test_play_status_tuner(self):
@@ -113,19 +113,19 @@ class TestFeaturesV675(testtools.TestCase):
         )
         self.assertEqual(
             'ROCK M',
-            rxv.RXV.safe_get(res, ["Artist", "Program_Type"])
+            rxv.RXV.safe_get(res, rxv.rxv.ARTIST_OPTIONS)
         )
         self.assertEqual(
             'RADIO & BOB!',
-            rxv.RXV.safe_get(res, ["Album", "Radio_Text_A"])
+            rxv.RXV.safe_get(res, rxv.rxv.ALBUM_OPTIONS)
         )
         self.assertEqual(
             'Black Stone Cherry - Burnin\'_',
-            rxv.RXV.safe_get(res, ["Song", "Radio_Text_B"])
+            rxv.RXV.safe_get(res, rxv.rxv.SONG_OPTIONS)
         )
         self.assertEqual(
             'RADIOBOB',
-            rxv.RXV.safe_get(res, ["Station", "Program_Service"])
+            rxv.RXV.safe_get(res, rxv.rxv.STATION_OPTIONS)
         )
 
     @requests_mock.mock()

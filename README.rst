@@ -90,6 +90,8 @@ Contributors
 * `@sdague <https://github.com/sdague>`_
 * `@postlund <https://github.com/postlund>`_
 * `@HerrHofrat <https://github.com/HerrHofrat>`_
+* `@mischuh <https://github.com/mischuh>`_
+
 
 Users
 =====

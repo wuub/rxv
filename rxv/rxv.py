@@ -531,7 +531,7 @@ class RXV(object):
             raise MenuUnavailable(cur_input)
 
         request_text = ListControlCursor.format(
-            rc_name=src_name,
+            src_name=src_name,
             action=action
         )
         return self._request('PUT', request_text, zone_cmd=False)

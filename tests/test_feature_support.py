@@ -21,7 +21,6 @@ class TestFeaturesV675(testtools.TestCase):
         super(TestFeaturesV675, self).setUp()
         m.get(DESC_XML, text=sample_content('rx-v675-desc.xml'))
         self.rec = rxv.RXV(FAKE_IP)
-        print(self.rec)
 
     def test_supports_method(self):
         rec = self.rec

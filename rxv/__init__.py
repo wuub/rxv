@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
+from __future__ import absolute_import, division, print_function
+
 import logging
 
-from .rxv import RXV
-from .rxv import PlaybackSupport
 from . import ssdp
+from .rxv import RXV
 
 __all__ = ['RXV']
 

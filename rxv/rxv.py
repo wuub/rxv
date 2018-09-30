@@ -7,13 +7,15 @@ import logging
 import re
 import time
 import warnings
-import xml.etree.ElementTree as ET
+import xml
 from collections import namedtuple
 from math import floor
 
 import requests
+from defusedxml import cElementTree
 
-from .exceptions import MenuUnavailable, PlaybackUnavailable, ResponseException, UnknownPort
+from .exceptions import (MenuUnavailable, PlaybackUnavailable,
+                         ResponseException, UnknownPort)
 
 try:
     from urllib.parse import urlparse
@@ -72,6 +74,12 @@ AvailableScenes = '<Config>GetParam</Config>'
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
 
+# PlayStatus options
+ARTIST_OPTIONS = ["Artist", "Program_Type"]
+ALBUM_OPTIONS = ["Album", "Radio_Text_A"]
+SONG_OPTIONS = ["Song", "Track", "Radio_Text_B"]
+STATION_OPTIONS = ["Station", "Program_Service"]
+
 
 class RXV(object):
 
@@ -99,10 +107,13 @@ class RXV(object):
         try:
             desc_xml = self._session.get(self.unit_desc_url).content
             if not desc_xml:
-                logger.error("Unsupported Yamaha device? Failed to fetch %s" % self.unit_desc_url)
+                logger.error(
+                    "Unsupported Yamaha device? Failed to fetch {}".format(
+                        self.unit_desc_url
+                    ))
                 return
-            self._desc_xml = ET.fromstring(desc_xml)
-        except ET.ParseError:
+            self._desc_xml = cElementTree.fromstring(desc_xml)
+        except xml.etree.ElementTree.ParseError:
             logger.exception("Invalid XML returned for request %s: %s",
                              self.unit_desc_url, desc_xml)
             raise
@@ -139,13 +150,14 @@ class RXV(object):
                 data=request_text,
                 headers={"Content-Type": "text/xml"}
             )
-            response = ET.XML(res.content)  # releases connection to the pool
+            # releases connection to the pool
+            response = cElementTree.XML(res.content)
             if response.get("RC") != "0":
                 logger.error("Request %s failed with %s",
                              request_text, res.content)
                 raise ResponseException(res.content)
             return response
-        except ET.ParseError:
+        except xml.etree.ElementTree.ParseError:
             logger.exception("Invalid XML returned for request %s: %s",
                              request_text, res.content)
             raise
@@ -297,18 +309,24 @@ class RXV(object):
     def surround_program(self):
         request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)
-        return response.find("%s/Surround/Program_Sel/Current/Sound_Program" % self.zone).text
+        return response.find(
+            "%s/Surround/Program_Sel/Current/Sound_Program" % self.zone
+        ).text
 
     @surround_program.setter
     def surround_program(self, surround_name):
         assert surround_name in self.surround_programs()
-        parameter = "<Sound_Program>{parameter}</Sound_Program>".format(parameter=surround_name)
+        parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
+            parameter=surround_name
+        )
         request_text = SurroundProgram.format(parameter=parameter)
         self._request('PUT', request_text)
 
     def surround_programs(self):
         if not self._surround_programs_cache:
-            source_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % self._zone)
+            source_xml = self._desc_xml.find(
+                './/*[@YNC_Tag="%s"]' % self._zone
+            )
             if source_xml is None:
                 return False
 
@@ -426,8 +444,28 @@ class RXV(object):
         avail = next(config.iter('Feature_Availability'))
         return avail.text == 'Ready'
 
+    @staticmethod
+    def safe_get(doc, names):
+        try:
+            # python 3.x
+            import html
+        except ImportError:
+            # python 2.7
+            import HTMLParser
+            html = HTMLParser.HTMLParser()
+
+        for name in names:
+            tag = doc.find(".//%s" % name)
+            if tag is not None and tag.text is not None:
+                # Tuner and Net Radio sometimes respond
+                # with escaped entities
+                return html.unescape(tag.text).strip()
+        return ""
+
     def play_status(self):
+
         src_name = self._src_name(self.input)
+
         if not src_name:
             return None
 
@@ -437,21 +475,16 @@ class RXV(object):
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, zone_cmd=False)
 
-        playing = (res.find(".//Playback_Info").text == "Play")
+        playing = RXV.safe_get(res, ["Playback_Info"]) == "Play" \
+            or src_name == "Tuner"
 
-        def safe_get(doc, name):
-            tag = doc.find(".//%s" % name)
-            if tag is not None:
-                return tag.text or ""
-            else:
-                return ""
-
-        artist = safe_get(res, "Artist")
-        album = safe_get(res, "Album")
-        song = safe_get(res, "Song")
-        station = safe_get(res, "Station")
-
-        status = PlayStatus(playing, artist, album, song, station)
+        status = PlayStatus(
+            playing,
+            artist=RXV.safe_get(res, ARTIST_OPTIONS),
+            album=RXV.safe_get(res, ALBUM_OPTIONS),
+            song=RXV.safe_get(res, SONG_OPTIONS),
+            station=RXV.safe_get(res, STATION_OPTIONS)
+        )
         return status
 
     def menu_status(self):
@@ -485,7 +518,10 @@ class RXV(object):
         if not src_name:
             raise MenuUnavailable(cur_input)
 
-        request_text = ListControlJumpLine.format(src_name=src_name, lineno=lineno)
+        request_text = ListControlJumpLine.format(
+            src_name=src_name,
+            lineno=lineno
+        )
         return self._request('PUT', request_text, zone_cmd=False)
 
     def _menu_cursor(self, action):
@@ -494,7 +530,10 @@ class RXV(object):
         if not src_name:
             raise MenuUnavailable(cur_input)
 
-        request_text = ListControlCursor.format(src_name=src_name, action=action)
+        request_text = ListControlCursor.format(
+            src_name=src_name,
+            action=action
+        )
         return self._request('PUT', request_text, zone_cmd=False)
 
     def menu_up(self):

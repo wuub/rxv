@@ -1,11 +1,8 @@
-import fixtures
 from io import open
-import mock
-import os
-import sys
-import testtools
 
 import requests_mock
+import testtools
+
 import rxv
 
 FAKE_IP = '10.0.0.0'
@@ -58,6 +55,77 @@ class TestFeaturesV675(testtools.TestCase):
         self.assertTrue(rec.supports_play_method("SERVER", "Stop"))
         self.assertTrue(rec.supports_play_method("SERVER", "Skip Fwd"))
         self.assertTrue(rec.supports_play_method("SERVER", "Skip Rev"))
+
+    def test_play_status_spotify(self):
+        from defusedxml import cElementTree as ET
+        res = ET.XML(sample_content('rx-v1030-spotify-response.xml'))
+        self.assertTrue(
+            rxv.RXV.safe_get(res, ["Playback_Info"]) == "Play"
+        )
+        self.assertEqual(
+            'Lenny Kravitz',
+            rxv.RXV.safe_get(res, rxv.rxv.ARTIST_OPTIONS)
+        )
+        self.assertEqual(
+            'It\'s Enough',
+            rxv.RXV.safe_get(res, rxv.rxv.ALBUM_OPTIONS)
+        )
+        self.assertEqual(
+            'It\'s Enough',
+            rxv.RXV.safe_get(res, rxv.rxv.SONG_OPTIONS)
+        )
+        self.assertEqual(
+            '',
+            rxv.RXV.safe_get(res, rxv.rxv.STATION_OPTIONS)
+        )
+
+    def test_play_status_netradio(self):
+        from defusedxml import cElementTree as ET
+        res = ET.XML(sample_content('rx-v1030-netradio-response.xml'))
+        self.assertTrue(
+            rxv.RXV.safe_get(res, ["Playback_Info"]) == "Play"
+        )
+        self.assertEqual(
+            '',
+            rxv.RXV.safe_get(res, rxv.rxv.ARTIST_OPTIONS)
+        )
+        self.assertEqual(
+            'Undertow',
+            rxv.RXV.safe_get(res, rxv.rxv.ALBUM_OPTIONS)
+        )
+        self.assertEqual(
+            'Sober',
+            rxv.RXV.safe_get(res, rxv.rxv.SONG_OPTIONS)
+        )
+        self.assertEqual(
+            'NDR 2 (HH)',
+            rxv.RXV.safe_get(res, rxv.rxv.STATION_OPTIONS)
+        )
+
+    def test_play_status_tuner(self):
+        from defusedxml import cElementTree as ET
+        res = ET.XML(sample_content('rx-v1030-tuner-response.xml'))
+        src_name = "Tuner"
+        self.assertTrue(
+            rxv.RXV.safe_get(res, ["Playback_Info"]) == "Play"
+            or src_name == "Tuner"
+        )
+        self.assertEqual(
+            'ROCK M',
+            rxv.RXV.safe_get(res, rxv.rxv.ARTIST_OPTIONS)
+        )
+        self.assertEqual(
+            'RADIO & BOB!',
+            rxv.RXV.safe_get(res, rxv.rxv.ALBUM_OPTIONS)
+        )
+        self.assertEqual(
+            'Black Stone Cherry - Burnin\'_',
+            rxv.RXV.safe_get(res, rxv.rxv.SONG_OPTIONS)
+        )
+        self.assertEqual(
+            'RADIOBOB',
+            rxv.RXV.safe_get(res, rxv.rxv.STATION_OPTIONS)
+        )
 
     @requests_mock.mock()
     def test_playback_support(self, m):

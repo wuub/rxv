@@ -31,7 +31,7 @@ setup(
     license='MIT',
     author_email='github@wuub.net',
     packages=find_packages(),
-    install_requires=['requests'],
+    install_requires=['requests', 'defusedxml'],
     tests_require=['tox'],
     zip_safe=False,
     cmdclass={'test': Tox},
@@ -46,6 +46,7 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: Implementation :: PyPy"
     ]
 )

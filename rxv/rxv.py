@@ -656,7 +656,7 @@ class RXV(object):
 
             Server>Playlists>GoodVibes
 
-        This code is copied from the net_radio function. 
+        This code is copied from the net_radio function.
 
         TODO: better error handling if we some how time out
         """

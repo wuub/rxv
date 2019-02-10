@@ -28,7 +28,7 @@ setup(
     long_description=open('README.rst').read(),
     author='Wojciech Bederski',
     url="https://github.com/wuub/rxv",
-    license='MIT',
+    license='BSD',
     author_email='github@wuub.net',
     packages=find_packages(),
     install_requires=['requests', 'defusedxml'],

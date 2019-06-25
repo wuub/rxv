@@ -330,7 +330,7 @@ class RXV(object):
             if source_xml is None:
                 return False
 
-            setup = source_xml.find('.//*[@Title_1="Setup"]')
+            setup = source_xml.find('.//Menu[@Title_1="Setup"]')
             if setup is None:
                 return False
 

@@ -50,6 +50,7 @@ GetParam = 'GetParam'
 YamahaCommand = '<YAMAHA_AV cmd="{command}">{payload}</YAMAHA_AV>'
 Zone = '<{zone}>{request_text}</{zone}>'
 BasicStatusGet = '<Basic_Status>GetParam</Basic_Status>'
+PartyMode = '<System><Party_Mode><Mode>{state}</Mode></Party_Mode></System>'
 PowerControl = '<Power_Control><Power>{state}</Power></Power_Control>'
 PowerControlSleep = '<Power_Control><Sleep>{sleep_value}</Sleep></Power_Control>'
 Input = '<Input><Input_Sel>{input_name}</Input_Sel></Input>'
@@ -589,6 +590,22 @@ class RXV(object):
         for val in range(start_vol, final_vol, step):
             self.volume = val
             time.sleep(sleep)
+
+    @property
+    def partymode(self):
+        request_text = PartyMode.format(state=GetParam)
+        response = self._request('GET', request_text,False)
+        pmode = response.find('System/Party_Mode/Mode').text
+        assert pmode in ["On", "Off"]
+        return pmode == "On"
+
+    @partymode.setter
+    def partymode(self, state):
+        assert state in [True, False]
+        new_state = "On" if state else "Off"
+        request_text = PartyMode.format(state=new_state)
+        response = self._request('PUT', request_text,False)
+        return response
 
     @property
     def mute(self):

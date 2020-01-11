@@ -78,6 +78,9 @@ AvailableScenes = '<Config>GetParam</Config>'
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
 
+# String constants
+STRAIGHT = "Straight"
+
 # PlayStatus options
 ARTIST_OPTIONS = ["Artist", "Program_Type"]
 ALBUM_OPTIONS = ["Album", "Radio_Text_A"]
@@ -310,18 +313,32 @@ class RXV(object):
 
     @property
     def surround_program(self):
+        """
+        Get current selected surround program.
+
+        If a STRAIGHT mode is supported and active, returns the Straight mode.
+        Otherwise returns the currently active surround program.
+        """
         request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)
-        return response.find(
+        straight = response.find(
+            "%s/Surround/Program_Sel/Current/Straight" % self.zone
+        ).text == "On"
+        program = response.find(
             "%s/Surround/Program_Sel/Current/Sound_Program" % self.zone
         ).text
+
+        return STRAIGHT if straight else program
 
     @surround_program.setter
     def surround_program(self, surround_name):
         assert surround_name in self.surround_programs()
-        parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
-            parameter=surround_name
-        )
+        if surround_name == STRAIGHT:
+            parameter = "<Straight>On</Straight>"
+        else:
+            parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
+                parameter=surround_name
+            )
         request_text = SurroundProgram.format(parameter=parameter)
         self._request('PUT', request_text)
 
@@ -337,14 +354,19 @@ class RXV(object):
             if setup is None:
                 return False
 
-            puts = setup.find('.//Put_2/Param_1')
-            if puts is None:
+            programs = setup.find('.//*[@Title_1="Program"]/Put_2/Param_1')
+            if programs is None:
                 return False
 
-            supports = puts.findall('.//Direct')
+            supports = programs.findall('.//Direct')
             self._surround_programs_cache = list()
             for s in supports:
                 self._surround_programs_cache.append(s.text)
+
+            straight = setup.find('.//*[@Title_1="Straight"]/Put_1')
+            if straight is not None:
+                self._surround_programs_cache.append(STRAIGHT)
+
         return self._surround_programs_cache
 
     @property

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2013 Joanna Tustanowska & Wojciech Bederski
+#
+# SPDX-License-Identifier: Unlicense
+
 mock
 pytest>=2.9.2
 pytest-cov>=2.3.1

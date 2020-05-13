@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+
+# SPDX-FileCopyrightText: 2013 Joanna Tustanowska & Wojciech Bederski
+#
+# SPDX-License-Identifier: BSD-3-Clause
+
 import time
 
 import rxv

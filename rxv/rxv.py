@@ -84,8 +84,8 @@ STATION_OPTIONS = ["Station", "Program_Service"]
 class RXV(object):
 
     def __init__(self, ctrl_url, model_name="Unknown",
-                 zone="Main_Zone", friendly_name='Unknown',
-                 unit_desc_url=None):
+                 serial_number=None, zone="Main_Zone",
+                 friendly_name='Unknown', unit_desc_url=None):
         if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}.\d{1,3}", ctrl_url):
             # backward compatibility: accept ip address as a contorl url
             warnings.warn("Using IP address as a Control URL is deprecated")
@@ -93,6 +93,7 @@ class RXV(object):
         self.ctrl_url = ctrl_url
         self.unit_desc_url = unit_desc_url or re.sub('ctrl$', 'desc.xml', ctrl_url)
         self.model_name = model_name
+        self.serial_number = serial_number
         self.friendly_name = friendly_name
         self._inputs_cache = None
         self._zones_cache = None

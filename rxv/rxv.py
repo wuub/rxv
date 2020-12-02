@@ -77,9 +77,11 @@ HdmiOut = '<System><Sound_Video><HDMI><Output><OUT_{port}>{command}</OUT_{port}>
 AvailableScenes = '<Config>GetParam</Config>'
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
+DirectMode = '<Sound_Video><Direct>{parameter}</Direct></Sound_Video>'
 
 # String constants
 STRAIGHT = "Straight"
+DIRECT = "Direct"
 
 # PlayStatus options
 ARTIST_OPTIONS = ["Artist", "Program_Type"]
@@ -312,11 +314,31 @@ class RXV(object):
                 yield cmd.text
 
     @property
+    def direct_mode(self):
+        assert DIRECT in self.surround_programs()
+        request_text = DirectMode.format(parameter="<Mode>GetParam</Mode>")
+        response = self._request('GET', request_text)
+        direct = response.find(
+            "%s/Sound_Video/Direct/Mode" % self.zone
+        ).text == "On"
+
+        return direct
+
+    @direct_mode.setter
+    def direct_mode(self, mode):
+        assert DIRECT in self.surround_programs()
+        if mode:
+            request_text = DirectMode.format(parameter="<Mode>On</Mode>")
+        else:
+            request_text = DirectMode.format(parameter="<Mode>Off</Mode>")
+        self._request('PUT', request_text)
+
+    @property
     def surround_program(self):
         """
         Get current selected surround program.
 
-        If a STRAIGHT mode is supported and active, returns the Straight mode.
+        If a STRAIGHT or DIRECT mode is supported and active, returns that mode.
         Otherwise returns the currently active surround program.
         """
         request_text = SurroundProgram.format(parameter=GetParam)
@@ -328,19 +350,32 @@ class RXV(object):
             "%s/Surround/Program_Sel/Current/Sound_Program" % self.zone
         ).text
 
-        return STRAIGHT if straight else program
+        if self.direct_mode:
+            return DIRECT
+        elif straight:
+            return STRAIGHT
+        else:
+            return program
 
     @surround_program.setter
     def surround_program(self, surround_name):
         assert surround_name in self.surround_programs()
-        if surround_name == STRAIGHT:
-            parameter = "<Straight>On</Straight>"
+        if surround_name == DIRECT:
+            self.direct_mode = True
         else:
-            parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
-                parameter=surround_name
-            )
-        request_text = SurroundProgram.format(parameter=parameter)
-        self._request('PUT', request_text)
+            if self.direct_mode:
+                # Disable direct mode before changing any other settings,
+                # otherwise they don't have an effect
+                self.direct_mode = False
+
+            if surround_name == STRAIGHT:
+                parameter = "<Straight>On</Straight>"
+            else:
+                parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
+                    parameter=surround_name
+                )
+            request_text = SurroundProgram.format(parameter=parameter)
+            self._request('PUT', request_text)
 
     def surround_programs(self):
         if not self._surround_programs_cache:
@@ -366,6 +401,10 @@ class RXV(object):
             straight = setup.find('.//*[@Title_1="Straight"]/Put_1')
             if straight is not None:
                 self._surround_programs_cache.append(STRAIGHT)
+
+            direct = setup.find('.//*[@Title_1="Direct"]/Put_1')
+            if direct is not None:
+                self._surround_programs_cache.append(DIRECT)
 
         return self._surround_programs_cache
 

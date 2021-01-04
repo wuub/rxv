@@ -61,8 +61,8 @@ PlayControl = '<{src_name}><Play_Control><Playback>{action}</Playback></Play_Con
 ListGet = '<{src_name}><List_Info>GetParam</List_Info></{src_name}>'
 ListControlJumpLine = '<{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line>' \
                       '</List_Control></{src_name}>'
-ListControlCursor = '<{src_name}><List_Control><Cursor>{action}</Cursor>'\
-                    '</List_Control></{src_name}>'
+ListControlCursor = '<{src_name}><Cursor_Control><Cursor>{action}</Cursor>'\
+                    '</Cursor_Control></{src_name}>'
 VolumeLevel = '<Volume><Lvl>{value}</Lvl></Volume>'
 VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
@@ -434,6 +434,12 @@ class RXV(object):
     def _src_name(self, cur_input):
         if cur_input not in self.inputs():
             return None
+        if cur_input.upper().startswith('HDMI'):
+            # CEC commands can be sent over the HDMI inputs to control devices
+            # connected to the receiver. These can support play methods as well
+            # as menu cursor commands. Return the zone so these features
+            # will be enabled.
+            return self.zone
         return self.inputs()[cur_input]
 
     def is_ready(self):

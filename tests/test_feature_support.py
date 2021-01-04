@@ -146,11 +146,11 @@ class TestFeaturesV675(unittest.TestCase):
         self.assertFalse(support.skip_r)
 
         support = rec.get_playback_support("HDMI1")
-        self.assertFalse(support.play)
-        self.assertFalse(support.stop)
-        self.assertFalse(support.pause)
-        self.assertFalse(support.skip_f)
-        self.assertFalse(support.skip_r)
+        self.assertTrue(support.play)
+        self.assertTrue(support.stop)
+        self.assertTrue(support.pause)
+        self.assertTrue(support.skip_f)
+        self.assertTrue(support.skip_r)
 
         support = rec.get_playback_support("SERVER")
         self.assertTrue(support.play)

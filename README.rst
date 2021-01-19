@@ -1,13 +1,10 @@
 rxv 
 ===
-.. image:: https://travis-ci.org/wuub/rxv.svg?branch=master
-    :target: https://travis-ci.org/wuub/rxv
+.. image:: https://badge.fury.io/py/rxv.svg
+    :target: https://badge.fury.io/py/rxv
 
-.. image:: https://landscape.io/github/wuub/rxv/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/wuub/rxv/master
-   :alt: Code Health
 
-Automation Library for Yamaha RX-V473, RX-V573, RX-V673, RX-V773 receivers
+Automation Library for Yamaha receivers
 
 Installation
 ============
@@ -54,6 +51,12 @@ In most cases **rxv** module will manage to obtain locations of local compatible
   True
   >>> rx.play()
   >>> rx.next()
+  >>> rx.outputs
+  {'hdmi2': 'off', 'hdmi1': 'on'}
+  >>> rx.enable_output('hdmi2', True)
+  >>> rx.enable_output('hdmi1', False)
+  >>> rx.outputs
+  {'hdmi2': 'on', 'hdmi1': 'off'}
 
 
 If SSDP causes you some problems, `ctrl_url` can be provided by hand.::
@@ -83,6 +86,9 @@ Contributors
 * `@Raynes <https://github.com/Raynes>`_
 * `@sdague <https://github.com/sdague>`_
 * `@postlund <https://github.com/postlund>`_
+* `@HerrHofrat <https://github.com/HerrHofrat>`_
+* `@mischuh <https://github.com/mischuh>`_
+
 
 Users
 =====

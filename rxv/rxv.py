@@ -7,13 +7,15 @@ import logging
 import re
 import time
 import warnings
-import xml.etree.ElementTree as ET
+import xml
 from collections import namedtuple
 from math import floor
 
 import requests
+from defusedxml import cElementTree
 
-from .exceptions import MenuUnavailable, PlaybackUnavailable, ResponseException
+from .exceptions import (MenuUnavailable, PlaybackUnavailable,
+                         ResponseException, UnknownPort)
 
 try:
     from urllib.parse import urlparse
@@ -48,6 +50,7 @@ GetParam = 'GetParam'
 YamahaCommand = '<YAMAHA_AV cmd="{command}">{payload}</YAMAHA_AV>'
 Zone = '<{zone}>{request_text}</{zone}>'
 BasicStatusGet = '<Basic_Status>GetParam</Basic_Status>'
+PartyMode = '<System><Party_Mode><Mode>{state}</Mode></Party_Mode></System>'
 PowerControl = '<Power_Control><Power>{state}</Power></Power_Control>'
 PowerControlSleep = '<Power_Control><Sleep>{sleep_value}</Sleep></Power_Control>'
 Input = '<Input><Input_Sel>{input_name}</Input_Sel></Input>'
@@ -65,17 +68,27 @@ VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
 SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
+SelectServerLine = '<SERVER><List_Control><Direct_Sel>Line_{lineno}'\
+                   '</Direct_Sel></List_Control></SERVER>'
+
+HdmiOut = '<System><Sound_Video><HDMI><Output><OUT_{port}>{command}</OUT_{port}>'\
+          '</Output></HDMI></Sound_Video></System>'
+AvailableScenes = '<Config>GetParam</Config>'
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
-SceneSelItem = '<Scene><Scene_Sel_Item>{parameter}</Scene_Sel_Item></Scene>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
-SurroundProgramSet = '<Surround><Program_Sel><Current><Sound_Program>{parameter}</Sound_Program>'\
-                     '</Current></Program_Sel></Surround>'
+
+# PlayStatus options
+ARTIST_OPTIONS = ["Artist", "Program_Type"]
+ALBUM_OPTIONS = ["Album", "Radio_Text_A"]
+SONG_OPTIONS = ["Song", "Track", "Radio_Text_B"]
+STATION_OPTIONS = ["Station", "Program_Service"]
+
 
 class RXV(object):
 
     def __init__(self, ctrl_url, model_name="Unknown",
-                 zone="Main_Zone", friendly_name='Unknown',
-                 unit_desc_url=None):
+                 serial_number=None, zone="Main_Zone",
+                 friendly_name='Unknown', unit_desc_url=None):
         if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}.\d{1,3}", ctrl_url):
             # backward compatibility: accept ip address as a contorl url
             warnings.warn("Using IP address as a Control URL is deprecated")
@@ -83,6 +96,7 @@ class RXV(object):
         self.ctrl_url = ctrl_url
         self.unit_desc_url = unit_desc_url or re.sub('ctrl$', 'desc.xml', ctrl_url)
         self.model_name = model_name
+        self.serial_number = serial_number
         self.friendly_name = friendly_name
         self._inputs_cache = None
         self._zones_cache = None
@@ -96,8 +110,14 @@ class RXV(object):
         """Pull and parse the desc.xml so we can query it later."""
         try:
             desc_xml = self._session.get(self.unit_desc_url).content
-            self._desc_xml = ET.fromstring(desc_xml)
-        except ET.ParseError:
+            if not desc_xml:
+                logger.error(
+                    "Unsupported Yamaha device? Failed to fetch {}".format(
+                        self.unit_desc_url
+                    ))
+                return
+            self._desc_xml = cElementTree.fromstring(desc_xml)
+        except xml.etree.ElementTree.ParseError:
             logger.exception("Invalid XML returned for request %s: %s",
                              self.unit_desc_url, desc_xml)
             raise
@@ -134,13 +154,14 @@ class RXV(object):
                 data=request_text,
                 headers={"Content-Type": "text/xml"}
             )
-            response = ET.XML(res.content)  # releases connection to the pool
+            # releases connection to the pool
+            response = cElementTree.XML(res.content)
             if response.get("RC") != "0":
                 logger.error("Request %s failed with %s",
                              request_text, res.content)
                 raise ResponseException(res.content)
             return response
-        except ET.ParseError:
+        except xml.etree.ElementTree.ParseError:
             logger.exception("Invalid XML returned for request %s: %s",
                              request_text, res.content)
             raise
@@ -254,21 +275,78 @@ class RXV(object):
         return self._inputs_cache
 
     @property
+    def outputs(self):
+        outputs = {}
+
+        for cmd in self._find_commands('System,Sound_Video,HDMI,Output'):
+            # An output typically looks like this:
+            #   System,Sound_Video,HDMI,Output,OUT_1
+            # Extract the index number at the end as it is needed when
+            # requesting its current state.
+            m = re.match(r'.*_(\d+)$', cmd)
+            if m is None:
+                continue
+
+            port_number = m.group(1)
+            request = HdmiOut.format(port=port_number, command='GetParam')
+            response = self._request('GET', request, zone_cmd=False)
+            port_state = response.find(cmd.replace(',', '/')).text.lower()
+            outputs['hdmi' + str(port_number)] = port_state
+
+        return outputs
+
+    def enable_output(self, port, enabled):
+        m = re.match(r'hdmi(\d+)', port.lower())
+        if m is None:
+            raise UnknownPort(port)
+
+        request = HdmiOut.format(port=m.group(1),
+                                 command='On' if enabled else 'Off')
+        self._request('PUT', request, zone_cmd=False)
+
+    def _find_commands(self, cmd_name):
+        for cmd in self._desc_xml.findall('.//Cmd_List/Define'):
+            if cmd.text.startswith(cmd_name):
+                yield cmd.text
+
+    @property
     def surround_program(self):
         request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)
-        return response.find("%s/Surround/Program_Sel/Current/Sound_Program" % self.zone).text
+        return response.find(
+            "%s/Surround/Program_Sel/Current/Sound_Program" % self.zone
+        ).text
 
     @surround_program.setter
     def surround_program(self, surround_name):
         assert surround_name in self.surround_programs()
-        request_text = SurroundProgramSet.format(parameter=surround_name)
+        parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
+            parameter=surround_name
+        )
+        request_text = SurroundProgram.format(parameter=parameter)
         self._request('PUT', request_text)
 
     def surround_programs(self):
-        zone_xml = self._desc_xml.find('.//*[@YNC_Tag="%s"]' % self._zone)
-        programs = zone_xml.findall('.//*[@Func_Ex="Surround"]/*/Put_2/Param_1/Direct')
-        return [e.text for e in programs]
+        if not self._surround_programs_cache:
+            source_xml = self._desc_xml.find(
+                './/*[@YNC_Tag="%s"]' % self._zone
+            )
+            if source_xml is None:
+                return False
+
+            setup = source_xml.find('.//Menu[@Title_1="Setup"]')
+            if setup is None:
+                return False
+
+            puts = setup.find('.//Put_2/Param_1')
+            if puts is None:
+                return False
+
+            supports = puts.findall('.//Direct')
+            self._surround_programs_cache = list()
+            for s in supports:
+                self._surround_programs_cache.append(s.text)
+        return self._surround_programs_cache
 
     @property
     def scene(self):
@@ -278,19 +356,21 @@ class RXV(object):
 
     @scene.setter
     def scene(self, scene_name):
-        if scene_name in self.scenes().values():
-            scene_name = next(k for k, v in self.scenes().items() if v == scene_name)
         assert scene_name in self.scenes()
-        request_text = Scene.format(parameter=scene_name)
+        scene_number = self._scenes_cache.get(scene_name)
+        request_text = Scene.format(parameter=scene_number)
         self._request('PUT', request_text)
 
     def scenes(self):
         if not self._scenes_cache:
-            request_text = SceneSelItem.format(parameter=GetParam)
-            res = self._request('GET', request_text)
-            raw_scenes = dict(zip((elt.text for elt in res.iter("Param")),
-                                  (elt.text for elt in res.iter("Title"))))
-            self._scenes_cache = {k: v for k, v in raw_scenes.items() if k.startswith("Scene ")}
+            res = self._request('GET', AvailableScenes)
+            scenes = res.find('.//Scene')
+            if scenes is None:
+                return False
+
+            self._scenes_cache = {}
+            for scene in scenes:
+                self._scenes_cache[scene.text] = scene.tag.replace("_", " ")
         return self._scenes_cache
 
     @property
@@ -368,8 +448,28 @@ class RXV(object):
         avail = next(config.iter('Feature_Availability'))
         return avail.text == 'Ready'
 
+    @staticmethod
+    def safe_get(doc, names):
+        try:
+            # python 3.x
+            import html
+        except ImportError:
+            # python 2.7
+            import HTMLParser
+            html = HTMLParser.HTMLParser()
+
+        for name in names:
+            tag = doc.find(".//%s" % name)
+            if tag is not None and tag.text is not None:
+                # Tuner and Net Radio sometimes respond
+                # with escaped entities
+                return html.unescape(tag.text).strip()
+        return ""
+
     def play_status(self):
+
         src_name = self._src_name(self.input)
+
         if not src_name:
             return None
 
@@ -379,21 +479,16 @@ class RXV(object):
         request_text = PlayGet.format(src_name=src_name)
         res = self._request('GET', request_text, zone_cmd=False)
 
-        playing = (res.find(".//Playback_Info").text == "Play")
+        playing = RXV.safe_get(res, ["Playback_Info"]) == "Play" \
+            or src_name == "Tuner"
 
-        def safe_get(doc, name):
-            tag = doc.find(".//%s" % name)
-            if tag is not None:
-                return tag.text or ""
-            else:
-                return ""
-
-        artist = safe_get(res, "Artist")
-        album = safe_get(res, "Album")
-        song = safe_get(res, "Song")
-        station = safe_get(res, "Station")
-
-        status = PlayStatus(playing, artist, album, song, station)
+        status = PlayStatus(
+            playing,
+            artist=RXV.safe_get(res, ARTIST_OPTIONS),
+            album=RXV.safe_get(res, ALBUM_OPTIONS),
+            song=RXV.safe_get(res, SONG_OPTIONS),
+            station=RXV.safe_get(res, STATION_OPTIONS)
+        )
         return status
 
     def menu_status(self):
@@ -427,7 +522,10 @@ class RXV(object):
         if not src_name:
             raise MenuUnavailable(cur_input)
 
-        request_text = ListControlJumpLine.format(src_name=src_name, lineno=lineno)
+        request_text = ListControlJumpLine.format(
+            src_name=src_name,
+            lineno=lineno
+        )
         return self._request('PUT', request_text, zone_cmd=False)
 
     def _menu_cursor(self, action):
@@ -436,7 +534,10 @@ class RXV(object):
         if not src_name:
             raise MenuUnavailable(cur_input)
 
-        request_text = ListControlCursor.format(src_name=src_name, action=action)
+        request_text = ListControlCursor.format(
+            src_name=src_name,
+            action=action
+        )
         return self._request('PUT', request_text, zone_cmd=False)
 
     def menu_up(self):
@@ -466,7 +567,17 @@ class RXV(object):
 
     @volume.setter
     def volume(self, value):
-        value = str(int(value * 10))
+        """Convert volume for setting.
+
+        We're passing around volume in standard db units, like -52.0
+        db. The API takes int values. However, the API also only takes
+        int values that corespond to half db steps (so -52.0 and -51.5
+        are valid, -51.8 is not).
+
+        Through the power of math doing the int of * 2, then * 5 will
+        ensure we only get half steps.
+        """
+        value = str(int(value * 2) * 5)
         exp = 1
         unit = 'dB'
 
@@ -482,6 +593,22 @@ class RXV(object):
         for val in range(start_vol, final_vol, step):
             self.volume = val
             time.sleep(sleep)
+
+    @property
+    def partymode(self):
+        request_text = PartyMode.format(state=GetParam)
+        response = self._request('GET', request_text, False)
+        pmode = response.find('System/Party_Mode/Mode').text
+        assert pmode in ["On", "Off"]
+        return pmode == "On"
+
+    @partymode.setter
+    def partymode(self, state):
+        assert state in [True, False]
+        new_state = "On" if state else "Off"
+        request_text = PartyMode.format(state=new_state)
+        response = self._request('PUT', request_text, False)
+        return response
 
     @property
     def mute(self):
@@ -528,6 +655,39 @@ class RXV(object):
                     if value == layers[menu.layer - 1]:
                         lineno = line[5:]
                         self._direct_sel(lineno)
+                        if menu.layer == len(layers):
+                            return
+                        break
+            else:
+                # print("Sleeping because we are not ready yet")
+                time.sleep(1)
+
+    def _direct_sel_server(self, lineno):
+        request_text = SelectServerLine.format(lineno=lineno)
+        return self._request('PUT', request_text, zone_cmd=False)
+
+    def server(self, path):
+        """Play from specified server
+
+        This lets you play a SERVER address in a single command
+        with by encoding it with > as separators. For instance:
+
+            Server>Playlists>GoodVibes
+
+        This code is copied from the net_radio function.
+
+        TODO: better error handling if we some how time out
+        """
+        layers = path.split(">")
+        self.input = "SERVER"
+
+        for attempt in range(20):
+            menu = self.menu_status()
+            if menu.ready:
+                for line, value in menu.current_list.items():
+                    if value == layers[menu.layer - 1]:
+                        lineno = line[5:]
+                        self._direct_sel_server(lineno)
                         if menu.layer == len(layers):
                             return
                         break

@@ -3,6 +3,10 @@
 # C extensions
 *.so
 
+.idea/
+.pytest_cache/
+venv/
+
 # Packages
 *.egg
 *.egg-info

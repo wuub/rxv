@@ -597,7 +597,7 @@ class RXV(object):
     @property
     def partymode(self):
         request_text = PartyMode.format(state=GetParam)
-        response = self._request('GET', request_text,False)
+        response = self._request('GET', request_text, False)
         pmode = response.find('System/Party_Mode/Mode').text
         assert pmode in ["On", "Off"]
         return pmode == "On"
@@ -607,7 +607,7 @@ class RXV(object):
         assert state in [True, False]
         new_state = "On" if state else "Off"
         request_text = PartyMode.format(state=new_state)
-        response = self._request('PUT', request_text,False)
+        response = self._request('PUT', request_text, False)
         return response
 
     @property

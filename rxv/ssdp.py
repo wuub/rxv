@@ -37,8 +37,15 @@ FRIENDLY_NAME_QUERY = (
     "{urn:schemas-upnp-org:device-1-0}device"
     "/{urn:schemas-upnp-org:device-1-0}friendlyName"
 )
+SERIAL_NUMBER_QUERY = (
+    "{urn:schemas-upnp-org:device-1-0}device"
+    "/{urn:schemas-upnp-org:device-1-0}serialNumber"
+)
 
-RxvDetails = namedtuple("RxvDetails", "ctrl_url unit_desc_url, model_name friendly_name")
+RxvDetails = namedtuple(
+    "RxvDetails",
+    "ctrl_url unit_desc_url, model_name friendly_name serial_number"
+)
 
 
 def discover(timeout=1.5):
@@ -85,8 +92,9 @@ def rxv_details(location):
     unit_desc_url = urljoin(url_base_el.text, unit_desc_url_local)
     model_name = res.find(MODEL_NAME_QUERY).text
     friendly_name = res.find(FRIENDLY_NAME_QUERY).text
+    serial_number = res.find(SERIAL_NUMBER_QUERY).text
 
-    return RxvDetails(ctrl_url, unit_desc_url, model_name, friendly_name)
+    return RxvDetails(ctrl_url, unit_desc_url, model_name, friendly_name, serial_number)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,8 @@
 from io import open
 
 import requests_mock
-import testtools
+import unittest
+
 
 import rxv
 
@@ -15,7 +16,7 @@ def sample_content(name):
         return f.read()
 
 
-class TestFeaturesV675(testtools.TestCase):
+class TestFeaturesV675(unittest.TestCase):
 
     @requests_mock.mock()
     def setUp(self, m):

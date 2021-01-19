@@ -1,7 +1,7 @@
 from io import open
 
 import requests_mock
-import testtools
+import unittest
 
 import rxv
 
@@ -15,7 +15,7 @@ def sample_content(name):
         return f.read()
 
 
-class TestRXV(testtools.TestCase):
+class TestRXV(unittest.TestCase):
 
     @requests_mock.mock()
     def test_basic_object(self, m):
@@ -26,7 +26,7 @@ class TestRXV(testtools.TestCase):
             'http://%s/YamahaRemoteControl/desc.xml' % FAKE_IP)
 
 
-class TestDesc(testtools.TestCase):
+class TestDesc(unittest.TestCase):
 
     @requests_mock.mock()
     def test_discover_zones(self, m):

@@ -68,6 +68,8 @@ VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
 SelectNetRadioLine = '<NET_RADIO><List_Control><Direct_Sel>Line_{lineno}'\
                      '</Direct_Sel></List_Control></NET_RADIO>'
+SelectServerLine = '<SERVER><List_Control><Direct_Sel>Line_{lineno}'\
+                   '</Direct_Sel></List_Control></SERVER>'
 
 HdmiOut = '<System><Sound_Video><HDMI><Output><OUT_{port}>{command}</OUT_{port}>'\
           '</Output></HDMI></Sound_Video></System>'
@@ -85,8 +87,8 @@ STATION_OPTIONS = ["Station", "Program_Service"]
 class RXV(object):
 
     def __init__(self, ctrl_url, model_name="Unknown",
-                 zone="Main_Zone", friendly_name='Unknown',
-                 unit_desc_url=None):
+                 serial_number=None, zone="Main_Zone",
+                 friendly_name='Unknown', unit_desc_url=None):
         if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}.\d{1,3}", ctrl_url):
             # backward compatibility: accept ip address as a contorl url
             warnings.warn("Using IP address as a Control URL is deprecated")
@@ -94,6 +96,7 @@ class RXV(object):
         self.ctrl_url = ctrl_url
         self.unit_desc_url = unit_desc_url or re.sub('ctrl$', 'desc.xml', ctrl_url)
         self.model_name = model_name
+        self.serial_number = serial_number
         self.friendly_name = friendly_name
         self._inputs_cache = None
         self._zones_cache = None
@@ -331,7 +334,7 @@ class RXV(object):
             if source_xml is None:
                 return False
 
-            setup = source_xml.find('.//*[@Title_1="Setup"]')
+            setup = source_xml.find('.//Menu[@Title_1="Setup"]')
             if setup is None:
                 return False
 
@@ -652,6 +655,39 @@ class RXV(object):
                     if value == layers[menu.layer - 1]:
                         lineno = line[5:]
                         self._direct_sel(lineno)
+                        if menu.layer == len(layers):
+                            return
+                        break
+            else:
+                # print("Sleeping because we are not ready yet")
+                time.sleep(1)
+
+    def _direct_sel_server(self, lineno):
+        request_text = SelectServerLine.format(lineno=lineno)
+        return self._request('PUT', request_text, zone_cmd=False)
+
+    def server(self, path):
+        """Play from specified server
+
+        This lets you play a SERVER address in a single command
+        with by encoding it with > as separators. For instance:
+
+            Server>Playlists>GoodVibes
+
+        This code is copied from the net_radio function.
+
+        TODO: better error handling if we some how time out
+        """
+        layers = path.split(">")
+        self.input = "SERVER"
+
+        for attempt in range(20):
+            menu = self.menu_status()
+            if menu.ready:
+                for line, value in menu.current_list.items():
+                    if value == layers[menu.layer - 1]:
+                        lineno = line[5:]
+                        self._direct_sel_server(lineno)
                         if menu.layer == len(layers):
                             return
                         break

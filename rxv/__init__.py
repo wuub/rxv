@@ -16,12 +16,4 @@ logging.getLogger('rxv').addHandler(logging.NullHandler())
 
 def find(timeout=1.5):
     """Find all Yamah receivers on local network using SSDP search."""
-    return [
-        RXV(
-            ctrl_url=ri.ctrl_url,
-            model_name=ri.model_name,
-            friendly_name=ri.friendly_name,
-            unit_desc_url=ri.unit_desc_url
-        )
-        for ri in ssdp.discover(timeout=timeout)
-    ]
+    return [RXV(**ri._asdict()) for ri in ssdp.discover(timeout=timeout)]

@@ -7,6 +7,7 @@ import rxv
 
 FAKE_IP = '10.0.0.0'
 DESC_XML = 'http://%s/YamahaRemoteControl/desc.xml' % FAKE_IP
+CTRL_URL = 'http://%s/YamahaRemoteControl/ctrl' % FAKE_IP
 
 
 def sample_content(name):
@@ -20,7 +21,7 @@ class TestFeaturesV675(testtools.TestCase):
     def setUp(self, m):
         super(TestFeaturesV675, self).setUp()
         m.get(DESC_XML, text=sample_content('rx-v675-desc.xml'))
-        self.rec = rxv.RXV(FAKE_IP)
+        self.rec = rxv.RXV(CTRL_URL)
 
     def test_supports_method(self):
         rec = self.rec

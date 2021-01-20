@@ -126,14 +126,12 @@ class RXV(object):
             raise
 
     def __unicode__(self):
-        return ('<{cls} model_name="{model}" zone="{zone}" '
-                'ctrl_url="{ctrl_url}" at {addr}>'.format(
-                    cls=self.__class__.__name__,
-                    zone=self._zone,
-                    model=self.model_name,
-                    ctrl_url=self.ctrl_url,
-                    addr=hex(id(self))
-                ))
+        return (f'<{self.__class__.__name__} '
+                f'model_name="{self.model_name}" '
+                f'serial_number="{self.serial_number}" '
+                f'zone="{self._zone}" '
+                f'ctrl_url="{self.ctrl_url}" '
+                f'at {hex(id(self))}>')
 
     def __str__(self):
         return self.__unicode__()

@@ -44,6 +44,9 @@ class TestFeaturesV675(unittest.TestCase):
         self.assertFalse(
             rec.supports_method("Tuner", "Play_Control", "Playback"))
 
+        self.assertTrue(
+            rec.supports_method("Main_Zone", "Sound_Video", "Dialogue_Adjust", "Dialogue_Lvl"))
+
     def test_supports_play_method(self):
         rec = self.rec
         self.assertFalse(rec.supports_play_method("NET_RADIO", "Pause"))

@@ -26,6 +26,12 @@ class PlaybackUnavailable(RXVException):
         super().__init__('{} does not support {}'.format(source, action))
 
 
+class CommandUnavailable(RXVException):
+    """Raised when command is called on unsupported device."""
+    def __init__(self, zone, command):
+        super().__init__('{} does not support {}'.format(zone, command))
+
+
 class UnknownPort(RXVException):
     """Raised when an unknown port is found."""
     def __init__(self, port):

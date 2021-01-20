@@ -14,7 +14,7 @@ from math import floor
 import requests
 from defusedxml import cElementTree
 
-from .exceptions import (MenuUnavailable, PlaybackUnavailable,
+from .exceptions import (CommandUnavailable, MenuUnavailable, PlaybackUnavailable,
                          ResponseException, UnknownPort)
 
 try:
@@ -665,6 +665,9 @@ class RXV(object):
 
         :return: An integer between 0 (no adjustment) to 3 (most increased).
         """
+        if self.supports_method(self.zone, "Sound_Video", "Dialogue_Adjust", "Dialogue_Lvl"):
+            raise CommandUnavailable(self.zone, "Dialogue_Lvl")
+
         get_tag = '<Dialogue_Adjust><Dialogue_Lvl>GetParam' \
                   '</Dialogue_Lvl></Dialogue_Adjust>'
         request_text = SoundVideo.format(value=get_tag)
@@ -680,6 +683,9 @@ class RXV(object):
             increase dialogue sounds over other sounds. A value of zero
             disables this feature.
         """
+        if self.supports_method(self.zone, "Sound_Video", "Dialogue_Adjust", "Dialogue_Lvl"):
+            raise CommandUnavailable(self.zone, "Dialogue_Lvl")
+
         if int(value) not in [0, 1, 2, 3]:
             raise ValueError("Value must be 0, 1, 2, or 3")
         set_tag = '<Dialogue_Adjust><Dialogue_Lvl>{}' \

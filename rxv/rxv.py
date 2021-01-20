@@ -509,7 +509,7 @@ class RXV(object):
 
         cl = {
             elt.tag: elt.find('Txt').text
-            for elt in current_list.getchildren()
+            for elt in list(current_list)
             if elt.find('Attribute').text != 'Unselectable'
         }
 

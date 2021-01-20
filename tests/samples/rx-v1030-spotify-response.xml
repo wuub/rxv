@@ -1,0 +1,18 @@
+<YAMAHA_AV rsp="GET" RC="0">
+    <Spotify>
+        <Play_Info>
+            <Feature_Availability>Ready</Feature_Availability>
+            <Playback_Info>Play</Playback_Info>
+            <Meta_Info>
+                <Artist>Lenny Kravitz</Artist>
+                <Album>It&apos;s Enough</Album>
+                <Track>It&apos;s Enough</Track>
+            </Meta_Info>
+            <Input_Logo>
+                <URL_S>/YamahaRemoteControl/Logos/logo005.png</URL_S>
+                <URL_M></URL_M>
+                <URL_L></URL_L>
+            </Input_Logo>
+        </Play_Info>
+    </Spotify>
+</YAMAHA_AV>

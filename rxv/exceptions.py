@@ -11,6 +11,7 @@ class ResponseException(RXVException):
     """Exception raised when yamaha receiver responded with an error code"""
     pass
 
+
 ReponseException = ResponseException
 
 

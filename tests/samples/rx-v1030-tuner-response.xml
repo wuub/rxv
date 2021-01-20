@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<YAMAHA_AV rsp="GET" RC="0">
+    <Tuner>
+        <Play_Info>
+            <Feature_Availability>Ready</Feature_Availability>
+            <Search_Mode>Preset</Search_Mode>
+            <Preset>
+                <Preset_Sel>2</Preset_Sel>
+            </Preset>
+            <Tuning>
+                <Band>FM</Band>
+                <Freq>
+                    <Current>
+                        <Val>9860</Val>
+                        <Exp>2</Exp>
+                        <Unit>MHz</Unit>
+                    </Current>
+                    <FM>
+                        <Val>9860</Val>
+                        <Exp>2</Exp>
+                        <Unit>MHz</Unit>
+                    </FM>
+                    <AM>
+                        <Val>1080</Val>
+                        <Exp>0</Exp>
+                        <Unit>kHz</Unit>
+                    </AM>
+                </Freq>
+            </Tuning>
+            <FM_Mode>Auto</FM_Mode>
+            <Signal_Info>
+                <Tuned>Assert</Tuned>
+                <Stereo>Assert</Stereo>
+            </Signal_Info>
+            <Meta_Info>
+                <Program_Type>ROCK M</Program_Type>
+                <Program_Service>RADIOBOB</Program_Service>
+                <Radio_Text_A>RADIO &amp; BOB!</Radio_Text_A>
+                <Radio_Text_B>Black Stone Cherry - Burnin&apos;_</Radio_Text_B>
+                <Clock_Time>17:12</Clock_Time>
+            </Meta_Info>
+        </Play_Info>
+    </Tuner>
+</YAMAHA_AV>

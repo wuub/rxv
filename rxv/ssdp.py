@@ -4,10 +4,11 @@ from __future__ import absolute_import, division, print_function
 
 import re
 import socket
-import xml.etree.ElementTree as ET
+import xml
 from collections import namedtuple
 
 import requests
+from defusedxml import cElementTree
 
 try:
     from urllib.parse import urljoin
@@ -36,8 +37,15 @@ FRIENDLY_NAME_QUERY = (
     "{urn:schemas-upnp-org:device-1-0}device"
     "/{urn:schemas-upnp-org:device-1-0}friendlyName"
 )
+SERIAL_NUMBER_QUERY = (
+    "{urn:schemas-upnp-org:device-1-0}device"
+    "/{urn:schemas-upnp-org:device-1-0}serialNumber"
+)
 
-RxvDetails = namedtuple("RxvDetails", "ctrl_url unit_desc_url, model_name friendly_name")
+RxvDetails = namedtuple(
+    "RxvDetails",
+    "ctrl_url unit_desc_url, model_name friendly_name serial_number"
+)
 
 
 def discover(timeout=1.5):
@@ -72,20 +80,21 @@ def rxv_details(location):
     """Looks under given UPNP url, and checks if Yamaha amplituner lives there
        returns RxvDetails if yes, None otherwise"""
     try:
-        xml = ET.XML(requests.get(location).content)
-    except:
+        res = cElementTree.XML(requests.get(location).content)
+    except xml.etree.ElementTree.ParseError:
         return None
-    url_base_el = xml.find(URL_BASE_QUERY)
+    url_base_el = res.find(URL_BASE_QUERY)
     if url_base_el is None:
         return None
-    ctrl_url_local = xml.find(CONTROL_URL_QUERY).text
+    ctrl_url_local = res.find(CONTROL_URL_QUERY).text
     ctrl_url = urljoin(url_base_el.text, ctrl_url_local)
-    unit_desc_url_local = xml.find(UNITDESC_URL_QUERY).text
+    unit_desc_url_local = res.find(UNITDESC_URL_QUERY).text
     unit_desc_url = urljoin(url_base_el.text, unit_desc_url_local)
-    model_name = xml.find(MODEL_NAME_QUERY).text
-    friendly_name = xml.find(FRIENDLY_NAME_QUERY).text
+    model_name = res.find(MODEL_NAME_QUERY).text
+    friendly_name = res.find(FRIENDLY_NAME_QUERY).text
+    serial_number = res.find(SERIAL_NUMBER_QUERY).text
 
-    return RxvDetails(ctrl_url, unit_desc_url, model_name, friendly_name)
+    return RxvDetails(ctrl_url, unit_desc_url, model_name, friendly_name, serial_number)
 
 
 if __name__ == '__main__':

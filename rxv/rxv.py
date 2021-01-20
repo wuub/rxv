@@ -556,6 +556,10 @@ class RXV(object):
     def menu_return(self):
         return self._menu_cursor("Return")
 
+    def menu_reset(self):
+        while self.menu_status().layer > 1:
+            self.menu_return()
+
     @property
     def volume(self):
         request_text = VolumeLevel.format(value=GetParam)
@@ -642,9 +646,11 @@ class RXV(object):
         ensure we give it time to get there.
 
         TODO: better error handling if we some how time out
+        TODO: multi page menus (scrolling down)
         """
         layers = path.split(">")
         self.input = "NET RADIO"
+        self.menu_reset()
 
         for attempt in range(20):
             menu = self.menu_status()

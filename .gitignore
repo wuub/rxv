@@ -3,6 +3,7 @@
 # C extensions
 *.so
 
+.vscode/
 .idea/
 .pytest_cache/
 venv/

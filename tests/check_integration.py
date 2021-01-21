@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import time
 
-import pytest
 import rxv
 
 rx = None
@@ -52,8 +51,6 @@ def test_menu():
     rx.menu_jump_line(3)
     rx.menu_up()
     rx.menu_down()
-    with pytest.raises(rxv.exceptions.MenuActionUnavailable):
-        rx.menu_right()
 
     rx.input = "HDMI1"
     time.sleep(1.0)

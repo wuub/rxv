@@ -20,3 +20,5 @@ class TestSurroundRXV(unittest.TestCase):
         rec = rxv.RXV(CTRL_URL)
         surround = rec.surround_programs()
         self.assertIn("Drama", surround)
+        self.assertIn("Direct", surround)
+        self.assertIn("Straight", surround)

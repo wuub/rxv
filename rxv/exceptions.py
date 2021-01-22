@@ -20,6 +20,12 @@ class MenuUnavailable(RXVException):
     pass
 
 
+class MenuActionUnavailable(RXVException):
+    """Menu control action unavailable for current input"""
+    def __init__(self, input, action):
+        super().__init__(f'{input} does not support menu cursor {action}')
+
+
 class PlaybackUnavailable(RXVException):
     """Raised when playback function called on unsupported source."""
     def __init__(self, source, action):

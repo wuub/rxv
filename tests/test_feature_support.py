@@ -146,11 +146,11 @@ class TestFeaturesV675(unittest.TestCase):
         self.assertFalse(support.skip_r)
 
         support = rec.get_playback_support("HDMI1")
-        self.assertFalse(support.play)
-        self.assertFalse(support.stop)
-        self.assertFalse(support.pause)
-        self.assertFalse(support.skip_f)
-        self.assertFalse(support.skip_r)
+        self.assertTrue(support.play)
+        self.assertTrue(support.stop)
+        self.assertTrue(support.pause)
+        self.assertTrue(support.skip_f)
+        self.assertTrue(support.skip_r)
 
         support = rec.get_playback_support("SERVER")
         self.assertTrue(support.play)
@@ -158,3 +158,40 @@ class TestFeaturesV675(unittest.TestCase):
         self.assertTrue(support.pause)
         self.assertTrue(support.skip_f)
         self.assertTrue(support.skip_r)
+
+    @requests_mock.mock()
+    def test_menu_cursor_support(self, m):
+        rec = self.rec
+        # we need to mock this out so that .inputs() work
+        m.post(rec.ctrl_url, text=sample_content("rx-v675-inputs-resp.xml"))
+
+        self.assertCountEqual(
+            [
+                rxv.rxv.CURSOR_DOWN,
+                rxv.rxv.CURSOR_RETURN,
+                rxv.rxv.CURSOR_RETURN_TO_HOME,
+                rxv.rxv.CURSOR_SEL,
+                rxv.rxv.CURSOR_UP,
+            ],
+            rec.supported_cursor_actions("NET RADIO"),
+        )
+
+        self.assertCountEqual(
+            [
+                rxv.rxv.CURSOR_DISPLAY,
+                rxv.rxv.CURSOR_DOWN,
+                rxv.rxv.CURSOR_LEFT,
+                rxv.rxv.CURSOR_MENU,
+                rxv.rxv.CURSOR_ON_SCREEN,
+                rxv.rxv.CURSOR_OPTION,
+                rxv.rxv.CURSOR_SEL,
+                rxv.rxv.CURSOR_RETURN,
+                rxv.rxv.CURSOR_RETURN_TO_HOME,
+                rxv.rxv.CURSOR_RIGHT,
+                rxv.rxv.CURSOR_TOP_MENU,
+                rxv.rxv.CURSOR_UP,
+            ],
+            rec.supported_cursor_actions("HDMI1"),
+        )
+
+        self.assertCountEqual([], rec.supported_cursor_actions("TUNER"))

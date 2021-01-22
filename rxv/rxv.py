@@ -14,7 +14,8 @@ from math import floor
 import requests
 from defusedxml import cElementTree
 
-from .exceptions import (CommandUnavailable, MenuUnavailable, PlaybackUnavailable,
+from .exceptions import (CommandUnavailable, MenuUnavailable,
+                         MenuActionUnavailable, PlaybackUnavailable,
                          ResponseException, UnknownPort)
 
 try:
@@ -63,6 +64,8 @@ ListControlJumpLine = '<{src_name}><List_Control><Jump_Line>{lineno}</Jump_Line>
                       '</List_Control></{src_name}>'
 ListControlCursor = '<{src_name}><List_Control><Cursor>{action}</Cursor>'\
                     '</List_Control></{src_name}>'
+CursorControlCursor = '<{src_name}><Cursor_Control><Cursor>{action}</Cursor>'\
+                      '</Cursor_Control></{src_name}>'
 VolumeLevel = '<Volume><Lvl>{value}</Lvl></Volume>'
 VolumeLevelValue = '<Val>{val}</Val><Exp>{exp}</Exp><Unit>{unit}</Unit>'
 VolumeMute = '<Volume><Mute>{state}</Mute></Volume>'
@@ -83,6 +86,20 @@ ARTIST_OPTIONS = ["Artist", "Program_Type"]
 ALBUM_OPTIONS = ["Album", "Radio_Text_A"]
 SONG_OPTIONS = ["Song", "Track", "Radio_Text_B"]
 STATION_OPTIONS = ["Station", "Program_Service"]
+
+# Cursor commands.
+CURSOR_DISPLAY = "Display"
+CURSOR_DOWN = "Down"
+CURSOR_LEFT = "Left"
+CURSOR_MENU = "Menu"
+CURSOR_ON_SCREEN = "On Screen"
+CURSOR_OPTION = "Option"
+CURSOR_SEL = "Sel"
+CURSOR_RETURN = "Return"
+CURSOR_RETURN_TO_HOME = "Return to Home"
+CURSOR_RIGHT = "Right"
+CURSOR_TOP_MENU = "Top Menu"
+CURSOR_UP = "Up"
 
 
 class RXV(object):
@@ -439,6 +456,12 @@ class RXV(object):
     def _src_name(self, cur_input):
         if cur_input not in self.inputs():
             return None
+        if cur_input.upper().startswith('HDMI'):
+            # CEC commands can be sent over the HDMI inputs to control devices
+            # connected to the receiver. These can support play methods as well
+            # as menu cursor commands. Return the zone so these features
+            # will be enabled.
+            return self.zone
         return self.inputs()[cur_input]
 
     def is_ready(self):
@@ -532,35 +555,76 @@ class RXV(object):
         )
         return self._request('PUT', request_text, zone_cmd=False)
 
+    def supported_cursor_actions(self, cur_input=None):
+        if cur_input is None:
+            cur_input = self.input
+        src_name = self._src_name(cur_input)
+        if not src_name:
+            return frozenset()
+        cursor_actions = self._desc_xml.findall(
+            f'.//*[@YNC_Tag="{src_name}"]//Menu[@Func="Cursor"]/Put_1')
+        if cursor_actions is None:
+            return frozenset()
+        return frozenset(action.text for action in cursor_actions)
+
     def _menu_cursor(self, action):
         cur_input = self.input
         src_name = self._src_name(cur_input)
         if not src_name:
             raise MenuUnavailable(cur_input)
 
-        request_text = ListControlCursor.format(
+        if self.supports_method(src_name, 'List_Control', 'Cursor'):
+            template = ListControlCursor
+        elif self.supports_method(src_name, 'Cursor_Control', 'Cursor'):
+            template = CursorControlCursor
+        else:
+            raise MenuUnavailable(cur_input)
+
+        # Check that the specific action is available for the input.
+        if action not in self.supported_cursor_actions():
+            raise MenuActionUnavailable(cur_input, action)
+
+        request_text = template.format(
             src_name=src_name,
             action=action
         )
         return self._request('PUT', request_text, zone_cmd=False)
 
     def menu_up(self):
-        return self._menu_cursor("Up")
+        return self._menu_cursor(CURSOR_UP)
 
     def menu_down(self):
-        return self._menu_cursor("Down")
+        return self._menu_cursor(CURSOR_DOWN)
 
     def menu_left(self):
-        return self._menu_cursor("Left")
+        return self._menu_cursor(CURSOR_LEFT)
 
     def menu_right(self):
-        return self._menu_cursor("Right")
+        return self._menu_cursor(CURSOR_RIGHT)
 
     def menu_sel(self):
-        return self._menu_cursor("Sel")
+        return self._menu_cursor(CURSOR_SEL)
 
     def menu_return(self):
-        return self._menu_cursor("Return")
+        return self._menu_cursor(CURSOR_RETURN)
+
+    def menu_return_to_home(self):
+        return self._menu_cursor(CURSOR_RETURN_TO_HOME)
+
+    def menu_on_screen(self):
+        return self._menu_cursor(CURSOR_ON_SCREEN)
+
+    def menu_top_menu(self):
+        return self._menu_cursor(CURSOR_TOP_MENU)
+
+    def menu_menu(self):
+        return self._menu_cursor(CURSOR_MENU)
+
+    def menu_option(self):
+        return self._menu_cursor(CURSOR_OPTION)
+
+    def menu_display(self):
+        return self._menu_cursor(CURSOR_DISPLAY)
 
     def menu_reset(self):
         while self.menu_status().layer > 1:

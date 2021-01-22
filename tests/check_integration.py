@@ -52,6 +52,12 @@ def test_menu():
     rx.menu_up()
     rx.menu_down()
 
+    rx.input = "HDMI1"
+    time.sleep(1.0)
+    rx.menu_right()
+    time.sleep(1.0)
+    rx.menu_left()
+
 
 def test_fade():
     rx.volume = -50

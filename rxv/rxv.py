@@ -89,7 +89,8 @@ class RXV(object):
 
     def __init__(self, ctrl_url, model_name="Unknown",
                  serial_number=None, zone="Main_Zone",
-                 friendly_name='Unknown', unit_desc_url=None):
+                 friendly_name='Unknown', unit_desc_url=None,
+                 http_timeout=10.0):
         if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}.\d{1,3}", ctrl_url):
             # backward compatibility: accept ip address as a contorl url
             warnings.warn("Using IP address as a Control URL is deprecated")
@@ -99,6 +100,7 @@ class RXV(object):
         self.model_name = model_name
         self.serial_number = serial_number
         self.friendly_name = friendly_name
+        self.http_timeout = http_timeout
         self._inputs_cache = None
         self._zones_cache = None
         self._zone = zone
@@ -110,7 +112,9 @@ class RXV(object):
     def _discover_features(self):
         """Pull and parse the desc.xml so we can query it later."""
         try:
-            desc_xml = self._session.get(self.unit_desc_url).content
+            desc_xml = self._session.get(
+                self.unit_desc_url, timeout=self.http_timeout
+            ).content
             if not desc_xml:
                 logger.error(
                     "Unsupported Yamaha device? Failed to fetch {}".format(
@@ -151,7 +155,8 @@ class RXV(object):
             res = self._session.post(
                 self.ctrl_url,
                 data=request_text,
-                headers={"Content-Type": "text/xml"}
+                headers={"Content-Type": "text/xml"},
+                timeout=self.http_timeout
             )
             # releases connection to the pool
             response = cElementTree.XML(res.content)

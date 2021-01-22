@@ -363,41 +363,46 @@ class RXV(object):
         If a STRAIGHT or DIRECT mode is supported and active, returns that mode.
         Otherwise returns the currently active surround program.
         """
+        if self.direct_mode:
+            return DIRECT
+
         request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)
         straight = response.find(
             "%s/Surround/Program_Sel/Current/Straight" % self.zone
         ).text == "On"
+
+        if straight:
+            return STRAIGHT
+
         program = response.find(
             "%s/Surround/Program_Sel/Current/Sound_Program" % self.zone
         ).text
 
-        if self.direct_mode:
-            return DIRECT
-        elif straight:
-            return STRAIGHT
-        else:
-            return program
+        return program
 
     @surround_program.setter
     def surround_program(self, surround_name):
         assert surround_name in self.surround_programs()
+
+        # short circut on direct program
         if surround_name == DIRECT:
             self.direct_mode = True
-        else:
-            if self.direct_mode:
-                # Disable direct mode before changing any other settings,
-                # otherwise they don't have an effect
-                self.direct_mode = False
+            return
 
-            if surround_name == STRAIGHT:
-                parameter = "<Straight>On</Straight>"
-            else:
-                parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
-                    parameter=surround_name
-                )
-            request_text = SurroundProgram.format(parameter=parameter)
-            self._request('PUT', request_text)
+        if self.direct_mode:
+            # Disable direct mode before changing any other settings,
+            # otherwise they don't have an effect
+            self.direct_mode = False
+
+        if surround_name == STRAIGHT:
+            parameter = "<Straight>On</Straight>"
+        else:
+            parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
+                parameter=surround_name
+            )
+        request_text = SurroundProgram.format(parameter=parameter)
+        self._request('PUT', request_text)
 
     def surround_programs(self):
         if not self._surround_programs_cache:

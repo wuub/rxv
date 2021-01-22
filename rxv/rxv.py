@@ -80,6 +80,11 @@ HdmiOut = '<System><Sound_Video><HDMI><Output><OUT_{port}>{command}</OUT_{port}>
 AvailableScenes = '<Config>GetParam</Config>'
 Scene = '<Scene><Scene_Sel>{parameter}</Scene_Sel></Scene>'
 SurroundProgram = '<Surround><Program_Sel><Current>{parameter}</Current></Program_Sel></Surround>'
+DirectMode = '<Sound_Video><Direct>{parameter}</Direct></Sound_Video>'
+
+# String constants
+STRAIGHT = "Straight"
+DIRECT = "Direct"
 
 # PlayStatus options
 ARTIST_OPTIONS = ["Artist", "Program_Type"]
@@ -331,21 +336,68 @@ class RXV(object):
                 yield cmd.text
 
     @property
+    def direct_mode(self):
+        assert DIRECT in self.surround_programs()
+        request_text = DirectMode.format(parameter="<Mode>GetParam</Mode>")
+        response = self._request('GET', request_text)
+        direct = response.find(
+            "%s/Sound_Video/Direct/Mode" % self.zone
+        ).text == "On"
+
+        return direct
+
+    @direct_mode.setter
+    def direct_mode(self, mode):
+        assert DIRECT in self.surround_programs()
+        if mode:
+            request_text = DirectMode.format(parameter="<Mode>On</Mode>")
+        else:
+            request_text = DirectMode.format(parameter="<Mode>Off</Mode>")
+        self._request('PUT', request_text)
+
+    @property
     def surround_program(self):
+        """
+        Get current selected surround program.
+
+        If a STRAIGHT or DIRECT mode is supported and active, returns that mode.
+        Otherwise returns the currently active surround program.
+        """
         request_text = SurroundProgram.format(parameter=GetParam)
         response = self._request('GET', request_text)
-        return response.find(
+        straight = response.find(
+            "%s/Surround/Program_Sel/Current/Straight" % self.zone
+        ).text == "On"
+        program = response.find(
             "%s/Surround/Program_Sel/Current/Sound_Program" % self.zone
         ).text
+
+        if self.direct_mode:
+            return DIRECT
+        elif straight:
+            return STRAIGHT
+        else:
+            return program
 
     @surround_program.setter
     def surround_program(self, surround_name):
         assert surround_name in self.surround_programs()
-        parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
-            parameter=surround_name
-        )
-        request_text = SurroundProgram.format(parameter=parameter)
-        self._request('PUT', request_text)
+        if surround_name == DIRECT:
+            self.direct_mode = True
+        else:
+            if self.direct_mode:
+                # Disable direct mode before changing any other settings,
+                # otherwise they don't have an effect
+                self.direct_mode = False
+
+            if surround_name == STRAIGHT:
+                parameter = "<Straight>On</Straight>"
+            else:
+                parameter = "<Sound_Program>{parameter}</Sound_Program>".format(
+                    parameter=surround_name
+                )
+            request_text = SurroundProgram.format(parameter=parameter)
+            self._request('PUT', request_text)
 
     def surround_programs(self):
         if not self._surround_programs_cache:
@@ -359,14 +411,23 @@ class RXV(object):
             if setup is None:
                 return False
 
-            puts = setup.find('.//Put_2/Param_1')
-            if puts is None:
+            programs = setup.find('.//*[@Title_1="Program"]/Put_2/Param_1')
+            if programs is None:
                 return False
 
-            supports = puts.findall('.//Direct')
+            supports = programs.findall('.//Direct')
             self._surround_programs_cache = list()
             for s in supports:
                 self._surround_programs_cache.append(s.text)
+
+            straight = setup.find('.//*[@Title_1="Straight"]/Put_1')
+            if straight is not None:
+                self._surround_programs_cache.append(STRAIGHT)
+
+            direct = setup.find('.//*[@Title_1="Direct"]/Put_1')
+            if direct is not None:
+                self._surround_programs_cache.append(DIRECT)
+
         return self._surround_programs_cache
 
     @property

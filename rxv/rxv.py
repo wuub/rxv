@@ -90,7 +90,7 @@ class RXV(object):
     def __init__(self, ctrl_url, model_name="Unknown",
                  serial_number=None, zone="Main_Zone",
                  friendly_name='Unknown', unit_desc_url=None,
-                 http_timeout=60.0):
+                 http_timeout=10.0):
         if re.match(r"\d{1,3}\.\d{1,3}\.\d{1,3}.\d{1,3}", ctrl_url):
             # backward compatibility: accept ip address as a contorl url
             warnings.warn("Using IP address as a Control URL is deprecated")

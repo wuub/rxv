@@ -2,3 +2,4 @@
   include Makefile
   recursive-include tests *.py
   recursive-include tests *.xml
+  recursive-include tests *.yaml

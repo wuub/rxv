@@ -337,7 +337,12 @@ class RXV(object):
 
     @property
     def direct_mode(self):
-        assert DIRECT in self.surround_programs()
+        """
+        Current state of direct mode.
+        """
+        if DIRECT not in self.surround_programs():
+            return False
+
         request_text = DirectMode.format(parameter="<Mode>GetParam</Mode>")
         response = self._request('GET', request_text)
         direct = response.find(
@@ -347,9 +352,14 @@ class RXV(object):
         return direct
 
     @direct_mode.setter
-    def direct_mode(self, mode):
+    def direct_mode(self, on):
+        """
+        Enable/Disable direct mode.
+
+        Precondition: DIRECT mode is supported, raises AssertionError otherwise.
+        """
         assert DIRECT in self.surround_programs()
-        if mode:
+        if on:
             request_text = DirectMode.format(parameter="<Mode>On</Mode>")
         else:
             request_text = DirectMode.format(parameter="<Mode>Off</Mode>")

@@ -65,3 +65,13 @@ def test_fade():
     assert rx.volume == -48
     rx.volume_fade(-51)
     assert rx.volume == -51
+
+
+def test_direct_mode():
+    if "Direct" in rx.surround_programs():
+        rx.surround_program = "Drama"
+        assert "Drama" == rx.surround_program
+        rx.surround_program = "Direct"
+        assert "Direct" == rx.surround_program
+        rx.surround_program = "Straight"
+        assert "Straight" == rx.surround_program

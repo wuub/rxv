@@ -1,0 +1,190 @@
+interactions:
+- request:
+    body: <YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel>GetParam</Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '102'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Input><Input_Sel>NET RADIO</Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '110'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel_Item>GetParam</Input_Sel_Item></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '112'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Input><Input_Sel_Item><Item_1><Param>Pandora</Param><RW>RW</RW><Title>
+        Pandora </Title><Icon><On>/YamahaRemoteControl/Icons/icon075.png</On><Off></Off></Icon><Src_Name>Pandora</Src_Name><Src_Number>1</Src_Number></Item_1><Item_2><Param>Spotify</Param><RW>RW</RW><Title>
+        Spotify </Title><Icon><On>/YamahaRemoteControl/Icons/icon102.png</On><Off></Off></Icon><Src_Name>Spotify</Src_Name><Src_Number>1</Src_Number></Item_2><Item_3><Param>AirPlay</Param><RW>RW</RW><Title>
+        AirPlay </Title><Icon><On>/YamahaRemoteControl/Icons/icon067.png</On><Off></Off></Icon><Src_Name>AirPlay</Src_Name><Src_Number>1</Src_Number></Item_3><Item_4><Param>SERVER</Param><RW>RW</RW><Title>
+        SERVER  </Title><Icon><On>/YamahaRemoteControl/Icons/icon006.png</On><Off></Off></Icon><Src_Name>SERVER</Src_Name><Src_Number>1</Src_Number></Item_4><Item_5><Param>NET
+        RADIO</Param><RW>RW</RW><Title>NET RADIO</Title><Icon><On>/YamahaRemoteControl/Icons/icon005.png</On><Off></Off></Icon><Src_Name>NET_RADIO</Src_Name><Src_Number>1</Src_Number></Item_5><Item_6><Param>USB</Param><RW>RW</RW><Title>   USB   </Title><Icon><On>/YamahaRemoteControl/Icons/icon009.png</On><Off></Off></Icon><Src_Name>USB</Src_Name><Src_Number>1</Src_Number></Item_6><Item_7><Param>iPod
+        (USB)</Param><RW>R</RW><Title>   USB   </Title><Icon><On>/YamahaRemoteControl/Icons/icon011.png</On><Off></Off></Icon><Src_Name>iPod_USB</Src_Name><Src_Number>1</Src_Number></Item_7><Item_8><Param>TUNER</Param><RW>RW</RW><Title>  TUNER  </Title><Icon><On>/YamahaRemoteControl/Icons/icon008.png</On><Off></Off></Icon><Src_Name>Tuner</Src_Name><Src_Number>1</Src_Number></Item_8><Item_9><Param>HDMI1</Param><RW>RW</RW><Title>PS3      </Title><Icon><On>/YamahaRemoteControl/Icons/icon004.png</On><Off></Off></Icon><Src_Name>Osdname:PlayStation
+        3</Src_Name><Src_Number>1</Src_Number></Item_9><Item_10><Param>HDMI2</Param><RW>RW</RW><Title>  HDMI2  </Title><Icon><On>/YamahaRemoteControl/Icons/icon004.png</On><Off></Off></Icon><Src_Name>Osdname:PlayStation
+        4</Src_Name><Src_Number>1</Src_Number></Item_10><Item_11><Param>HDMI3</Param><RW>RW</RW><Title>  HDMI3  </Title><Icon><On>/YamahaRemoteControl/Icons/icon004.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_11><Item_12><Param>HDMI4</Param><RW>RW</RW><Title>Chromecas</Title><Icon><On>/YamahaRemoteControl/Icons/icon004.png</On><Off></Off></Icon><Src_Name>Osdname:Chromecast</Src_Name><Src_Number>1</Src_Number></Item_12><Item_13><Param>HDMI5</Param><RW>RW</RW><Title>  HDMI5  </Title><Icon><On>/YamahaRemoteControl/Icons/icon004.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_13><Item_14><Param>HDMI6</Param><RW>RW</RW><Title>  HDMI6  </Title><Icon><On>/YamahaRemoteControl/Icons/icon004.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_14><Item_15><Param>AV1</Param><RW>RW</RW><Title>   AV1   </Title><Icon><On>/YamahaRemoteControl/Icons/icon003.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_15><Item_16><Param>AV2</Param><RW>RW</RW><Title>   AV2   </Title><Icon><On>/YamahaRemoteControl/Icons/icon003.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_16><Item_17><Param>AV3</Param><RW>RW</RW><Title>   AV3   </Title><Icon><On>/YamahaRemoteControl/Icons/icon003.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_17><Item_18><Param>AV4</Param><RW>RW</RW><Title>   AV4   </Title><Icon><On>/YamahaRemoteControl/Icons/icon003.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_18><Item_19><Param>AV5</Param><RW>RW</RW><Title>   AV5   </Title><Icon><On>/YamahaRemoteControl/Icons/icon003.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_19><Item_20><Param>AV6</Param><RW>RW</RW><Title>   AV6   </Title><Icon><On>/YamahaRemoteControl/Icons/icon003.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_20><Item_21><Param>AUX</Param><RW>RW</RW><Title>   AUX   </Title><Icon><On>/YamahaRemoteControl/Icons/icon104.png</On><Off></Off></Icon><Src_Name></Src_Name><Src_Number>1</Src_Number></Item_21></Input_Sel_Item></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '4236'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Input><Input_Sel>HDMI1</Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '99'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Input><Input_Sel></Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '101'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel>GetParam</Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '102'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Input><Input_Sel>HDMI1</Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '106'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Input><Input_Sel>HDMI2</Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '99'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Input><Input_Sel></Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '101'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="GET"><Main_Zone><Input><Input_Sel>GetParam</Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '102'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Input><Input_Sel>HDMI2</Input_Sel></Input></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '106'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+version: 1

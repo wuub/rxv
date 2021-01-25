@@ -1,0 +1,362 @@
+interactions:
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>-500</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '126'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Volume><Lvl></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '91'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="GET"><Main_Zone><Volume><Lvl>GetParam</Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '92'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Volume><Lvl><Val>-500</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '133'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>-500</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '126'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Volume><Lvl></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '91'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>-490</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '126'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Volume><Lvl></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '91'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>-480</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '126'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Volume><Lvl></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '91'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="GET"><Main_Zone><Volume><Lvl>GetParam</Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '92'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Volume><Lvl><Val>-480</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '133'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="GET"><Main_Zone><Volume><Lvl>GetParam</Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '92'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Volume><Lvl><Val>-480</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '133'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>-480</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '126'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Volume><Lvl></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '91'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>-490</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '126'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Volume><Lvl></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '91'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>-500</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '126'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Volume><Lvl></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '91'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="PUT"><Main_Zone><Volume><Lvl><Val>-510</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '126'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="PUT" RC="0"><Main_Zone><Volume><Lvl></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '91'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+- request:
+    body: <YAMAHA_AV cmd="GET"><Main_Zone><Volume><Lvl>GetParam</Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '92'
+      Content-Type:
+      - text/xml
+      User-Agent:
+      - python-requests/2.25.1
+    method: POST
+    uri: http://192.168.1.100/YamahaRemoteControl/ctrl
+  response:
+    body:
+      string: <YAMAHA_AV rsp="GET" RC="0"><Main_Zone><Volume><Lvl><Val>-510</Val><Exp>1</Exp><Unit>dB</Unit></Lvl></Volume></Main_Zone></YAMAHA_AV>
+    headers:
+      Content-Length:
+      - '133'
+      Content-Type:
+      - text/xml; charset="utf-8"
+      Server:
+      - AV_Receiver/3.1 (RX-V577)
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -93,18 +93,18 @@ SONG_OPTIONS = ["Song", "Track", "Radio_Text_B"]
 STATION_OPTIONS = ["Station", "Program_Service"]
 
 # Cursor commands.
-CURSOR_DISPLAY = "Display"
-CURSOR_DOWN = "Down"
-CURSOR_LEFT = "Left"
-CURSOR_MENU = "Menu"
-CURSOR_ON_SCREEN = "On Screen"
-CURSOR_OPTION = "Option"
-CURSOR_SEL = "Sel"
-CURSOR_RETURN = "Return"
-CURSOR_RETURN_TO_HOME = "Return to Home"
-CURSOR_RIGHT = "Right"
-CURSOR_TOP_MENU = "Top Menu"
-CURSOR_UP = "Up"
+CURSOR_DISPLAY = "Cursor_Display"
+CURSOR_DOWN = "Cursor_Down"
+CURSOR_LEFT = "Cursor_Left"
+CURSOR_MENU = "Cursor_Menu"
+CURSOR_ON_SCREEN = "Cursor_On_Screen"
+CURSOR_OPTION = "Cursor_Option"
+CURSOR_SEL = "Cursor_Sel"
+CURSOR_RETURN = "Cursor_Return"
+CURSOR_RETURN_TO_HOME = "Cursor_Home"
+CURSOR_RIGHT = "Cursor_Right"
+CURSOR_TOP_MENU = "Cursor_Top_Menu"
+CURSOR_UP = "Cursor_Up"
 
 
 class RXV(object):
@@ -631,17 +631,20 @@ class RXV(object):
         )
         return self._request('PUT', request_text, zone_cmd=False)
 
-    def supported_cursor_actions(self, cur_input=None):
+    def _menu_cursor_mapping(self, cur_input=None):
         if cur_input is None:
             cur_input = self.input
         src_name = self._src_name(cur_input)
         if not src_name:
-            return frozenset()
+            return {}
         cursor_actions = self._desc_xml.findall(
             f'.//*[@YNC_Tag="{src_name}"]//Menu[@Func="Cursor"]/Put_1')
         if cursor_actions is None:
-            return frozenset()
-        return frozenset(action.text for action in cursor_actions)
+            return {}
+        return {action.attrib['Func']: action.text for action in cursor_actions}
+
+    def supported_cursor_actions(self, cur_input=None):
+        return frozenset(self._menu_cursor_mapping(cur_input=cur_input).keys())
 
     def _menu_cursor(self, action):
         cur_input = self.input
@@ -657,12 +660,13 @@ class RXV(object):
             raise MenuUnavailable(cur_input)
 
         # Check that the specific action is available for the input.
-        if action not in self.supported_cursor_actions():
+        action_map = self._menu_cursor_mapping()
+        if action not in action_map:
             raise MenuActionUnavailable(cur_input, action)
 
         request_text = template.format(
             src_name=src_name,
-            action=action
+            action=action_map[action]
         )
         return self._request('PUT', request_text, zone_cmd=False)
 
@@ -704,7 +708,7 @@ class RXV(object):
 
     def menu_reset(self):
         while self.menu_status().layer > 1:
-            self.menu_return()
+            self.menu_left()
 
     @property
     def volume(self):

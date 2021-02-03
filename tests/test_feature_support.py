@@ -168,7 +168,7 @@ class TestFeaturesV675(unittest.TestCase):
         self.assertCountEqual(
             [
                 rxv.rxv.CURSOR_DOWN,
-                rxv.rxv.CURSOR_RETURN,
+                rxv.rxv.CURSOR_LEFT,
                 rxv.rxv.CURSOR_RETURN_TO_HOME,
                 rxv.rxv.CURSOR_SEL,
                 rxv.rxv.CURSOR_UP,

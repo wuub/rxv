@@ -59,27 +59,27 @@ class TestMenuCursor(unittest.TestCase):
         m.post(CTRL_URL, text=self._input_sel('NET RADIO'))
 
         rec.menu_up()
-        self.assertIn(f'>{rxv.rxv.CURSOR_UP}<', m.last_request.text)
+        self.assertIn('>Up<', m.last_request.text)
         self.assertIn('<List_Control>', m.last_request.text)
 
         rec.menu_down()
-        self.assertIn(f'>{rxv.rxv.CURSOR_DOWN}<', m.last_request.text)
+        self.assertIn('>Down<', m.last_request.text)
         self.assertIn('<List_Control>', m.last_request.text)
 
         rec.menu_sel()
-        self.assertIn(f'>{rxv.rxv.CURSOR_SEL}<', m.last_request.text)
+        self.assertIn('>Sel<', m.last_request.text)
         self.assertIn('<List_Control>', m.last_request.text)
 
-        rec.menu_return()
-        self.assertIn(f'>{rxv.rxv.CURSOR_RETURN}<', m.last_request.text)
+        rec.menu_left()
+        self.assertIn('>Return<', m.last_request.text)
         self.assertIn('<List_Control>', m.last_request.text)
 
         rec.menu_return_to_home()
-        self.assertIn(f'>{rxv.rxv.CURSOR_RETURN_TO_HOME}<', m.last_request.text)
+        self.assertIn('>Return to Home<', m.last_request.text)
         self.assertIn('<List_Control>', m.last_request.text)
 
         with self.assertRaises(rxv.exceptions.MenuActionUnavailable):
-            rec.menu_left()
+            rec.menu_return()
         with self.assertRaises(rxv.exceptions.MenuActionUnavailable):
             rec.menu_right()
         with self.assertRaises(rxv.exceptions.MenuActionUnavailable):
@@ -114,49 +114,49 @@ class TestMenuCursor(unittest.TestCase):
         m.post(CTRL_URL, text=self._input_sel('HDMI1'))
 
         rec.menu_up()
-        self.assertIn(f'>{rxv.rxv.CURSOR_UP}<', m.last_request.text)
+        self.assertIn('>Up<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_down()
-        self.assertIn(f'>{rxv.rxv.CURSOR_DOWN}<', m.last_request.text)
+        self.assertIn('>Down<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_left()
-        self.assertIn(f'>{rxv.rxv.CURSOR_LEFT}<', m.last_request.text)
+        self.assertIn('>Left<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_right()
-        self.assertIn(f'>{rxv.rxv.CURSOR_RIGHT}<', m.last_request.text)
+        self.assertIn('>Right<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_sel()
-        self.assertIn(f'>{rxv.rxv.CURSOR_SEL}<', m.last_request.text)
+        self.assertIn('>Sel<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_return()
-        self.assertIn(f'>{rxv.rxv.CURSOR_RETURN}<', m.last_request.text)
+        self.assertIn('>Return<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_return_to_home()
-        self.assertIn(f'>{rxv.rxv.CURSOR_RETURN_TO_HOME}<', m.last_request.text)
+        self.assertIn('>Return to Home<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_on_screen()
-        self.assertIn(f'>{rxv.rxv.CURSOR_ON_SCREEN}<', m.last_request.text)
+        self.assertIn('>On Screen<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_top_menu()
-        self.assertIn(f'>{rxv.rxv.CURSOR_TOP_MENU}<', m.last_request.text)
+        self.assertIn('>Top Menu<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_menu()
-        self.assertIn(f'>{rxv.rxv.CURSOR_MENU}<', m.last_request.text)
+        self.assertIn('>Menu<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_option()
-        self.assertIn(f'>{rxv.rxv.CURSOR_OPTION}<', m.last_request.text)
+        self.assertIn('>Option<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)
 
         rec.menu_display()
-        self.assertIn(f'>{rxv.rxv.CURSOR_DISPLAY}<', m.last_request.text)
+        self.assertIn('>Display<', m.last_request.text)
         self.assertIn('<Cursor_Control>', m.last_request.text)

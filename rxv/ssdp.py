@@ -88,8 +88,11 @@ def rxv_details(location):
         return None
     ctrl_url_local = res.find(CONTROL_URL_QUERY).text
     ctrl_url = urljoin(url_base_el.text, ctrl_url_local)
-    unit_desc_url_local = res.find(UNITDESC_URL_QUERY).text
-    unit_desc_url = urljoin(url_base_el.text, unit_desc_url_local)
+    unit_desc_url_local = res.find(UNITDESC_URL_QUERY)
+    if unit_desc_url_local is not None:
+        unit_desc_url = urljoin(url_base_el.text, unit_desc_url_local.text)
+    else:
+        unit_desc_url = None
     model_name = res.find(MODEL_NAME_QUERY).text
     friendly_name = res.find(FRIENDLY_NAME_QUERY).text
     serial_number = res.find(SERIAL_NUMBER_QUERY).text

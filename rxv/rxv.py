@@ -880,7 +880,7 @@ class RXV(object):
         request_text = SelectServerLine.format(lineno=lineno)
         return self._request('PUT', request_text, zone_cmd=False)
 
-    def server(self, path):
+    def server(self, path, retries=0):
         """Play from specified server
 
         This lets you play a SERVER address in a single command
@@ -888,26 +888,31 @@ class RXV(object):
 
             Server>Playlists>GoodVibes
 
-        This code is copied from the net_radio function.
-
         TODO: better error handling if we some how time out
         """
         layers = path.split(">")
         self.input = "SERVER"
+        self.menu_reset()
 
-        for attempt in range(20):
-            menu = self.menu_status()
-            if menu.ready:
-                for line, value in menu.current_list.items():
-                    if value == layers[menu.layer - 1]:
-                        lineno = line[5:]
-                        self._direct_sel_server(lineno)
-                        if menu.layer == len(layers):
-                            return
-                        break
-            else:
-                # print("Sleeping because we are not ready yet")
+        for item in layers:
+            while not self.menu_status().ready:
                 time.sleep(1)
+            menu = self.menu_status()
+            values = list(menu.current_list.values())
+            if item in values:
+                lineno = values.index(item) + 1
+                self._direct_sel_server(lineno)
+            else:
+                if retries > 0:
+                    self.server(path, retries-1)
+                else:
+                    return
+
+        while not self.menu_status().ready:
+            time.sleep(1)
+        menu = self.menu_status()
+        if menu.name == layers[-1]:
+            self._direct_sel_server(1)
 
     @property
     def sleep(self):

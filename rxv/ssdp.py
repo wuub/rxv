@@ -69,7 +69,10 @@ def discover(timeout=1.5):
         if not m:
             continue
         url = m.group(1).strip()
-        res = rxv_details(url)
+        try:
+            res = rxv_details(url)
+        except requests.exceptions.InvalidURL:
+            res = None
         if res:
             results.append(res)
 
